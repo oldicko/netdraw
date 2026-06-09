@@ -64,12 +64,15 @@ class SVGCanvas:
         svg_elem = f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="{width}"{dash_attr} />'
         self.add_to_layer(layer, svg_elem)
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, layer="assets"):
         weight = ' font-weight="bold"' if bold else ''
         style = ' font-style="italic"' if italic else ''
         anchor = ' text-anchor="middle"' if align == "center" else ' text-anchor="start"' if align == "left" else ' text-anchor="end"'
         escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         dy = ' dy="0.35em"' if align in ("center", "left", "right") else ''
+        if bg_color:
+            svg_halo = f'<text x="{x}" y="{y}" fill="{bg_color}" stroke="{bg_color}" stroke-width="4" stroke-linejoin="round" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
+            self.add_to_layer(layer, svg_halo)
         svg_elem = f'<text x="{x}" y="{y}" fill="{color}" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
         self.add_to_layer(layer, svg_elem)
 
@@ -355,7 +358,7 @@ class PILCanvas:
         else:
             self.draw.line([int(x1), int(y1), int(x2), int(y2)], fill=color, width=int(width))
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, layer="assets"):
         font = get_pil_font(None, font_size, bold)
         try:
             bbox = self.draw.textbbox((0, 0), text, font=font)
@@ -374,7 +377,10 @@ class PILCanvas:
             tx = x - w
             ty = y - h/2
             
-        self.draw.text((int(tx), int(ty)), text, font=font, fill=color)
+        if bg_color:
+            self.draw.text((int(tx), int(ty)), text, font=font, fill=color, stroke_width=2, stroke_fill=bg_color)
+        else:
+            self.draw.text((int(tx), int(ty)), text, font=font, fill=color)
 
     def draw_path(self, d, color, width, layer="flows"):
         parts = d.split()
@@ -880,6 +886,54 @@ def main():
         bottoms = [vlan_boxes[v][3] for v in vlans if v in vlan_boxes]
         zone_max_bottoms[zone] = max(bottoms) if bottoms else zone_y_ranges[zone][0] + 80
 
+    # Build maps of flow connections per box edge to space out endpoints
+    top_connections = {}
+    bottom_connections = {}
+    
+    def add_conn(box_key, flow_id, side):
+        if side == "top":
+            if box_key not in top_connections:
+                top_connections[box_key] = []
+            top_connections[box_key].append(flow_id)
+        else:
+            if box_key not in bottom_connections:
+                bottom_connections[box_key] = []
+            bottom_connections[box_key].append(flow_id)
+
+    for f in flows:
+        f_id = f["id"]
+        src_val = f["src"]
+        dst_val = f["dst"]
+        
+        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
+        
+        sz = vlan_to_zone[f["src_vlan"]]
+        dz = vlan_to_zone[f["dst_vlan"]]
+        s_idx = zone_order.index(sz)
+        d_idx = zone_order.index(dz)
+        
+        if s_idx < d_idx:
+            add_conn(src_key, f_id, "bottom")
+            add_conn(dst_key, f_id, "top")
+        elif s_idx > d_idx:
+            add_conn(src_key, f_id, "top")
+            add_conn(dst_key, f_id, "bottom")
+        else:
+            add_conn(src_key, f_id, "bottom")
+            add_conn(dst_key, f_id, "bottom")
+
+    def get_conn_x(box_key, bx, side, flow_id):
+        conns = top_connections.get(box_key, []) if side == "top" else bottom_connections.get(box_key, [])
+        if not conns:
+            return (bx[0] + bx[2]) / 2
+        conns_sorted = sorted(list(set(conns)))
+        if flow_id not in conns_sorted:
+            return (bx[0] + bx[2]) / 2
+        idx = conns_sorted.index(flow_id)
+        spacing = (bx[2] - bx[0]) / (len(conns_sorted) + 1)
+        return bx[0] + spacing * (idx + 1)
+
     # Draw coordinate paths for each flow
     flow_paths = {}
     for f in flows:
@@ -903,15 +957,24 @@ def main():
         else:
             bx_d = vlan_boxes[dst_val]
 
-        cx_s = (bx_s[0] + bx_s[2]) / 2
-        cy_s = (bx_s[1] + bx_s[3]) / 2
-        cx_d = (bx_d[0] + bx_d[2]) / 2
-        cy_d = (bx_d[1] + bx_d[3]) / 2
+        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
 
         sz = vlan_to_zone[f["src_vlan"]]
         dz = vlan_to_zone[f["dst_vlan"]]
         s_idx = zone_order.index(sz)
         d_idx = zone_order.index(dz)
+
+        # Get shifted horizontal connection coordinates to prevent overlaps
+        if s_idx < d_idx:
+            cx_s = get_conn_x(src_key, bx_s, "bottom", f_id)
+            cx_d = get_conn_x(dst_key, bx_d, "top", f_id)
+        elif s_idx > d_idx:
+            cx_s = get_conn_x(src_key, bx_s, "top", f_id)
+            cx_d = get_conn_x(dst_key, bx_d, "bottom", f_id)
+        else:
+            cx_s = get_conn_x(src_key, bx_s, "bottom", f_id)
+            cx_d = get_conn_x(dst_key, bx_d, "bottom", f_id)
 
         path_pts = []
 
@@ -923,21 +986,21 @@ def main():
             if d_idx == s_idx + 1:
                 # Adjacent
                 j = flow_horizontal_lanes[(f_id, s_idx)]
-                y_lane = zone_y_ranges[sz][1] - 15 + j * 6
+                y_lane = zone_y_ranges[sz][1] - 15 + j * 10
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
             else:
                 # Bypass margin routing
                 j1 = flow_horizontal_lanes[(f_id, s_idx)]
                 j2 = flow_horizontal_lanes[(f_id, d_idx - 1)]
-                y_start = zone_y_ranges[sz][1] - 15 + j1 * 6
-                y_end = zone_y_ranges[dz][0] - 15 + j2 * 6
+                y_start = zone_y_ranges[sz][1] - 15 + j1 * 10
+                y_end = zone_y_ranges[dz][0] - 15 + j2 * 10
                 
                 if f["margin"] == "left":
                     m_lane = flow_left_margin_lanes[f_id]
-                    x_bypass = 70 - m_lane * 6
+                    x_bypass = 70 - m_lane * 10
                 else:
                     m_lane = flow_right_margin_lanes[f_id]
-                    x_bypass = 1130 + m_lane * 6
+                    x_bypass = 1130 + m_lane * 10
                     
                 path_pts = [
                     start_pt,
@@ -955,21 +1018,21 @@ def main():
             if s_idx == d_idx + 1:
                 # Adjacent
                 j = flow_horizontal_lanes[(f_id, d_idx)]
-                y_lane = zone_y_ranges[dz][1] - 15 + j * 6
+                y_lane = zone_y_ranges[dz][1] - 15 + j * 10
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
             else:
                 # Bypass margin routing
                 j1 = flow_horizontal_lanes[(f_id, s_idx - 1)]
                 j2 = flow_horizontal_lanes[(f_id, d_idx)]
-                y_start = zone_y_ranges[sz][0] - 15 + j1 * 6
-                y_end = zone_y_ranges[dz][1] - 15 + j2 * 6
+                y_start = zone_y_ranges[sz][0] - 15 + j1 * 10
+                y_end = zone_y_ranges[dz][1] - 15 + j2 * 10
                 
                 if f["margin"] == "left":
                     m_lane = flow_left_margin_lanes[f_id]
-                    x_bypass = 70 - m_lane * 6
+                    x_bypass = 70 - m_lane * 10
                 else:
                     m_lane = flow_right_margin_lanes[f_id]
-                    x_bypass = 1130 + m_lane * 6
+                    x_bypass = 1130 + m_lane * 10
                     
                 path_pts = [
                     start_pt,
@@ -986,7 +1049,7 @@ def main():
                 start_pt = (cx_s, bx_s[3])
                 end_pt = (cx_d, bx_d[3])
                 j = flow_intra_lanes[f_id]
-                y_lane = zone_max_bottoms[sz] + 15 + j * 6
+                y_lane = zone_max_bottoms[sz] + 15 + j * 10
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
             else:
                 # Same VLAN flow (simple internal routing loop)
@@ -1294,22 +1357,37 @@ def main():
                     
         comment_text = f.get("comment", "")
         if comment_text:
+            label_bg = bg_color
             if longest_h:
                 p1, p2 = longest_h
                 x_mid = (p1[0] + p2[0]) / 2
                 y = p1[1]
+                for z, (y_start, y_end) in zone_y_ranges.items():
+                    if y_start <= y <= y_end:
+                        label_bg = config.get("zones", {}).get(z, {}).get("fill", bg_color)
+                        if label_bg == "none":
+                            label_bg = bg_color
+                        break
                 canvas.draw_text(
-                    x_mid, y - 5,
+                    x_mid, y,
                     text=comment_text,
                     font_size=8,
                     color=flow_style["stroke"],
                     align="center",
                     italic=True,
+                    bg_color=label_bg,
                     layer="flows"
                 )
             else:
                 mid = len(path) // 2
                 p = path[mid]
+                y = p[1]
+                for z, (y_start, y_end) in zone_y_ranges.items():
+                    if y_start <= y <= y_end:
+                        label_bg = config.get("zones", {}).get(z, {}).get("fill", bg_color)
+                        if label_bg == "none":
+                            label_bg = bg_color
+                        break
                 canvas.draw_text(
                     p[0] + 6, p[1],
                     text=comment_text,
@@ -1317,6 +1395,7 @@ def main():
                     color=flow_style["stroke"],
                     align="left",
                     italic=True,
+                    bg_color=label_bg,
                     layer="flows"
                 )
 
