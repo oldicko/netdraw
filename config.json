@@ -1,0 +1,67 @@
+{
+  "theme": "light",
+  "output_format": "png",
+  "dimensions": {
+    "width": 1200,
+    "height": 1697
+  },
+  "zone_order": ["WAN", "IT", "DMZ", "IACS", "IOT", "Facility"],
+  "zones": {
+    "WAN": {
+      "fill": "#eceff1",
+      "stroke": "#b0bec5",
+      "text_color": "#37474f",
+      "label": "Wide Area Network (WAN)"
+    },
+    "IT": {
+      "fill": "#e3f2fd",
+      "stroke": "#90caf9",
+      "text_color": "#0d47a1",
+      "label": "Enterprise IT (Zone 4/5)"
+    },
+    "DMZ": {
+      "fill": "#e0f7fa",
+      "stroke": "#80deea",
+      "text_color": "#006064",
+      "label": "Demilitarized Zone (Zone 3.5)"
+    },
+    "IACS": {
+      "fill": "#e8eaf6",
+      "stroke": "#9fa8da",
+      "text_color": "#1a237e",
+      "label": "Industrial Control Systems (Zone 3)"
+    },
+    "IOT": {
+      "fill": "#e0f2f1",
+      "stroke": "#80cbc4",
+      "text_color": "#004d40",
+      "label": "Internet of Things (IoT)"
+    },
+    "Facility": {
+      "fill": "#f5f5f5",
+      "stroke": "#e0e0e0",
+      "text_color": "#212121",
+      "label": "Facility / Safety (Zone 1/2)"
+    }
+  },
+  "styles": {
+    "font_family": "system-ui, -apple-system, sans-serif",
+    "vlan_border": {
+      "stroke": "#42a5f5",
+      "width": 2,
+      "dasharray": "6,4"
+    },
+    "asset": {
+      "fill": "#ffffff",
+      "stroke": "#90caf9",
+      "text_color": "#1565c0",
+      "ip_color": "#0d47a1",
+      "mac_color": "#546e7a"
+    },
+    "flow": {
+      "stroke": "#1976d2",
+      "width": 1.5,
+      "arrow_size": 6
+    }
+  }
+}

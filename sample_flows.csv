@@ -1,0 +1,9 @@
+IP address source,IP address destination,Comment
+10.10.1.50,10.10.1.10,AD Authentication
+172.16.1.20,172.16.1.10,Web Traffic
+192.168.1.50,192.168.1.10,Modbus TCP
+10,20,Inter-VLAN IT Traffic
+210,200,SCADA Polling
+192.168.2.10,100,SCADA Historian Push
+WAN,172.16.1.20,HTTPS Web access
+10.10.2.10,WAN,Outgoing SMTP mail

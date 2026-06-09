@@ -1,0 +1,13 @@
+Hostname,IP address,MAC address,Comment,VLAN ID,Zone
+IT-Server-1,"10.10.1.10;10.10.1.11",00:11:22:33:44:55,Primary Active Directory,10,IT
+IT-Workstation-1,10.10.1.50,00:11:22:33:44:56,Admin workstation,10,IT
+Mail-Server,10.10.2.10,00:11:22:33:44:57,Mail Gateway,20,IT
+DMZ-Web,172.16.1.10,00:aa:bb:cc:dd:01,Web server,100,DMZ
+DMZ-Proxy,172.16.1.20,00:aa:bb:cc:dd:02,Reverse proxy,100,DMZ
+PLC-1,192.168.1.10,00:50:56:a1:b2:c3,Siemens S7-1500,200,IACS
+PLC-2,192.168.1.11,00:50:56:a1:b2:c4,Rockwell ControlLogix,200,IACS
+HMI-1,192.168.1.50,00:50:56:a1:b2:c5,PanelView HMI,200,IACS
+SCADA-Server,"192.168.2.10;172.16.1.99",00:50:56:a1:b2:c6,Dual-homed SCADA host,210,IACS
+Temp-Sensor-1,10.50.1.10,00:11:99:88:77:66,Temperature sensor,300,IOT
+Camera-1,10.50.1.20,00:11:99:88:77:67,Main gate CCTV,300,IOT
+HVAC-Controller,192.168.50.10,00:80:f4:11:22:33,Building management system,400,Facility
