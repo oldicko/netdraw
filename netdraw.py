@@ -64,10 +64,18 @@ class SVGCanvas:
         self.assets = []
         self.flows = []
         self.labels = []
+        self.lens_col_name = "State"
+        self.states = {}
+        self.lens_enabled_by_default = False
         
-    def draw_rect(self, x, y, w, h, fill_color, border_color, border_width, dashed=False, rx=0, ry=0, layer="assets"):
+    def draw_rect(self, x, y, w, h, fill_color, border_color, border_width, dashed=False, rx=0, ry=0, layer="assets", state_attrs=None):
         dash_attr = ' stroke-dasharray="6,4"' if dashed else ''
-        svg_elem = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{fill_color}" stroke="{border_color}" stroke-width="{border_width}" rx="{rx}" ry="{ry}"{dash_attr} />'
+        state_str = ""
+        class_str = ""
+        if state_attrs:
+            class_str = ' class="lens-target"'
+            state_str = " " + " ".join([f'{k}="{v}"' for k, v in state_attrs.items()])
+        svg_elem = f'<rect{class_str} x="{x}" y="{y}" width="{w}" height="{h}" fill="{fill_color}" stroke="{border_color}" stroke-width="{border_width}" rx="{rx}" ry="{ry}"{dash_attr}{state_str} />'
         self.add_to_layer(layer, svg_elem)
 
     def draw_line(self, x1, y1, x2, y2, color, width, dashed=False, layer="flows"):
@@ -75,12 +83,19 @@ class SVGCanvas:
         svg_elem = f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="{width}"{dash_attr} />'
         self.add_to_layer(layer, svg_elem)
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets", state_attrs=None):
         weight = ' font-weight="bold"' if bold else ''
         style = ' font-style="italic"' if italic else ''
         anchor = ' text-anchor="middle"' if align == "center" else ' text-anchor="start"' if align == "left" else ' text-anchor="end"'
         escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         dy = ' dy="0.35em"' if align in ("center", "left", "right") else ''
+        
+        state_str = ""
+        class_str = ""
+        if state_attrs:
+            class_str = ' class="lens-target"'
+            state_str = " " + " ".join([f'{k}="{v}"' for k, v in state_attrs.items()])
+            
         if bg_color:
             if bg_style == "halo":
                 svg_halo = f'<text x="{x}" y="{y}" fill="{bg_color}" stroke="{bg_color}" stroke-width="4" stroke-linejoin="round" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
@@ -105,7 +120,7 @@ class SVGCanvas:
                 svg_bg = f'<rect x="{rx}" y="{ry}" width="{w}" height="{h}" fill="{bg_color}" stroke="none" />'
                 self.add_to_layer(layer, svg_bg)
             
-        svg_elem = f'<text x="{x}" y="{y}" fill="{color}" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
+        svg_elem = f'<text{class_str} x="{x}" y="{y}" fill="{color}" font-size="{font_size}"{weight}{style}{anchor}{dy}{state_str}>{escaped_text}</text>'
         self.add_to_layer(layer, svg_elem)
 
     def draw_path(self, d, color, width, layer="flows"):
@@ -131,6 +146,21 @@ class SVGCanvas:
 
     def get_html_wrapper(self):
         svg_content = self.get_svg_string()
+        lens_checked_attr = 'checked' if self.lens_enabled_by_default else ''
+        
+        # Build Legend items dynamically
+        legend_items = []
+        for state_name, style in self.states.items():
+            fill = style.get("fill", "#fff")
+            stroke = style.get("stroke", "#000")
+            legend_items.append(f"""
+      <div style="display: flex; align-items: center; margin-bottom: 4px; font-size: 11px; color: #475569;">
+        <span style="display: inline-block; width: 12px; height: 12px; background-color: {fill}; border: 1.5px solid {stroke}; margin-right: 6px; border-radius: 2px;"></span>
+        <span>{state_name}</span>
+      </div>
+            """)
+        legend_html = "\n".join(legend_items)
+        
         html = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -193,6 +223,9 @@ class SVGCanvas:
       margin-right: 8px;
       cursor: pointer;
     }}
+    .lens-target {{
+      transition: fill 0.2s, stroke 0.2s, opacity 0.2s;
+    }}
   </style>
 </head>
 <body>
@@ -210,6 +243,15 @@ class SVGCanvas:
     <label class="layer-item">
       <input type="checkbox" id="chk-flows" checked> Flows & Arrows
     </label>
+    
+    <label class="layer-item" style="border-top: 1px solid #e2e8f0; margin-top: 12px; padding-top: 12px; font-weight: bold;">
+      <input type="checkbox" id="chk-lens" {lens_checked_attr}> {self.lens_col_name} Lens
+    </label>
+    
+    <div id="lens-legend" style="margin-top: 10px; display: {'block' if self.lens_enabled_by_default else 'none'}; padding-left: 4px;">
+      <h4 style="margin: 0 0 6px 0; font-size: 11px; color: #475569; font-weight: 600;">{self.lens_col_name} Legend</h4>
+      {legend_html}
+    </div>
   </div>
 
   <div id="canvas-container">
@@ -286,7 +328,6 @@ class SVGCanvas:
     }}, {{ passive: false }});
     
     window.addEventListener('resize', initLayout);
-    window.addEventListener('load', initLayout);
 
     // Layer control toggles
     document.getElementById('chk-zones').addEventListener('change', (e) => {{
@@ -301,6 +342,57 @@ class SVGCanvas:
     }});
     document.getElementById('chk-flows').addEventListener('change', (e) => {{
       document.getElementById('layer-flows').style.display = e.target.checked ? 'inline' : 'none';
+    }});
+
+    // Lens toggling logic
+    const chkLens = document.getElementById('chk-lens');
+    const legend = document.getElementById('lens-legend');
+    
+    function applyLens() {{
+      const active = chkLens.checked;
+      legend.style.display = active ? 'block' : 'none';
+      
+      const targets = document.querySelectorAll('.lens-target');
+      targets.forEach(el => {{
+        const state = el.getAttribute('data-state');
+        if (active) {{
+          if (state) {{
+            // Apply state colors
+            if (el.tagName === 'rect') {{
+              const stateFill = el.getAttribute('data-state-fill');
+              const stateStroke = el.getAttribute('data-state-stroke');
+              if (stateFill) el.setAttribute('fill', stateFill);
+              if (stateStroke) el.setAttribute('stroke', stateStroke);
+            }} else if (el.tagName === 'text') {{
+              const stateColor = el.getAttribute('data-state-color');
+              if (stateColor) el.setAttribute('fill', stateColor);
+            }}
+            el.style.opacity = '1';
+          }} else {{
+            // Dim elements without a state
+            el.style.opacity = '0.3';
+          }}
+        }} else {{
+          // Revert to defaults
+          if (el.tagName === 'rect') {{
+            const defaultFill = el.getAttribute('data-default-fill');
+            const defaultStroke = el.getAttribute('data-default-stroke');
+            if (defaultFill) el.setAttribute('fill', defaultFill);
+            if (defaultStroke) el.setAttribute('stroke', defaultStroke);
+          }} else if (el.tagName === 'text') {{
+            const defaultColor = el.getAttribute('data-default-color');
+            if (defaultColor) el.setAttribute('fill', defaultColor);
+          }}
+          el.style.opacity = '1';
+        }}
+      }});
+    }}
+    
+    chkLens.addEventListener('change', applyLens);
+    
+    window.addEventListener('DOMContentLoaded', () => {{
+      initLayout();
+      applyLens();
     }});
   </script>
 </body>
@@ -356,7 +448,7 @@ class PILCanvas:
         self.image = Image.new("RGB", (self.width, self.height), bg_color)
         self.draw = ImageDraw.Draw(self.image)
         
-    def draw_rect(self, x, y, w, h, fill_color, border_color, border_width, dashed=False, rx=0, ry=0, layer="assets"):
+    def draw_rect(self, x, y, w, h, fill_color, border_color, border_width, dashed=False, rx=0, ry=0, layer="assets", state_attrs=None):
         box = [int(x), int(y), int(x + w), int(y + h)]
         fill = None if fill_color == "none" else fill_color
         outline = None if border_color == "none" else border_color
@@ -399,7 +491,7 @@ class PILCanvas:
         else:
             self.draw.line([int(x1), int(y1), int(x2), int(y2)], fill=color, width=int(width))
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets", state_attrs=None):
         font = get_pil_font(None, font_size, bold)
         try:
             bbox = self.draw.textbbox((0, 0), text, font=font)
@@ -470,17 +562,89 @@ class PILCanvas:
 
 
 # ==============================================================================
-# Helper logic to resolve flows
+# Helper logic to resolve flows and match IP ranges
 # ==============================================================================
-def get_flow_endpoint_vlan(val, ip_to_asset):
+def ip_to_int(ip):
+    try:
+        parts = [int(p) for p in ip.strip().split('.')]
+        if len(parts) == 4 and all(0 <= p <= 255 for p in parts):
+            return (parts[0] << 24) + (parts[1] << 16) + (parts[2] << 8) + parts[3]
+    except Exception:
+        pass
+    return None
+
+def ip_in_cidr(ip, cidr):
+    ip_val = ip_to_int(ip)
+    if ip_val is None:
+        return False
+    try:
+        net_part, mask_part = cidr.split('/')
+        net_val = ip_to_int(net_part)
+        mask_len = int(mask_part)
+        if net_val is not None and 0 <= mask_len <= 32:
+            if mask_len == 0:
+                return True
+            mask = (0xFFFFFFFF << (32 - mask_len)) & 0xFFFFFFFF
+            return (ip_val & mask) == (net_val & mask)
+    except Exception:
+        pass
+    return False
+
+def ip_in_hyphen_range(ip, hyphen_range):
+    ip_val = ip_to_int(ip)
+    if ip_val is None:
+        return False
+    try:
+        start_str, end_str = hyphen_range.split('-')
+        start_str = start_str.strip()
+        end_str = end_str.strip()
+        
+        start_val = ip_to_int(start_str)
+        if start_val is None:
+            return False
+            
+        if '.' not in end_str:
+            start_parts = start_str.split('.')
+            end_parts = end_str.split('.')
+            num_end_parts = len(end_parts)
+            merged_parts = start_parts[:-num_end_parts] + end_parts
+            end_str = '.'.join(merged_parts)
+            
+        end_val = ip_to_int(end_str)
+        if end_val is None:
+            return False
+            
+        return start_val <= ip_val <= end_val
+    except Exception:
+        pass
+    return False
+
+def match_ip_to_asset(val, ip_to_asset, assets):
+    # 1. Direct match in ip_to_asset
+    if val in ip_to_asset:
+        return ip_to_asset[val]
+        
+    # 2. Check CIDR or range matches
+    for asset in assets:
+        for ip_field in asset.get("IPs", []):
+            if '/' in ip_field:
+                if ip_in_cidr(val, ip_field):
+                    return asset
+            elif '-' in ip_field:
+                if ip_in_hyphen_range(val, ip_field):
+                    return asset
+    return None
+
+def get_flow_endpoint_vlan(val, ip_to_asset, assets):
     if val == "WAN":
         return "WAN"
     # If the val itself is a VLAN ID in the assets
-    if val in [a["VLAN ID"] for a in ip_to_asset.values()]:
+    if val in [a["VLAN ID"] for a in assets]:
         return val
-    # If it is a known IP
-    if val in ip_to_asset:
-        return ip_to_asset[val]["VLAN ID"]
+    # If it is a matched IP
+    matched = match_ip_to_asset(val, ip_to_asset, assets)
+    if matched:
+        return matched["VLAN ID"]
     return None
 
 # ==============================================================================
@@ -492,6 +656,8 @@ def main():
     parser.add_argument("-f", "--flows", required=True, help="Path to flows CSV file")
     parser.add_argument("-c", "--config", default="config.json", help="Path to config JSON file")
     parser.add_argument("-o", "--output", help="Path to output diagram file (.html or .png)")
+    parser.add_argument("-v", "--vlans", help="Path to VLANs CSV file (optional)")
+    parser.add_argument("--lens", action="store_true", help="Enable generic state coloring lens by default / for static PNG")
     
     args = parser.parse_args()
 
@@ -509,6 +675,9 @@ def main():
         print(f"Error reading config: {e}", file=sys.stderr)
         sys.exit(1)
 
+    states_config = config.get("states", {})
+    lens_col_name = config.get("lens_column", "State")
+
     # Validate output format selection
     output_format = config.get("output_format", "png").lower()
     if args.output:
@@ -524,6 +693,31 @@ def main():
         print("Error: Pillow library is required to output PNG format. Please install it with 'pip install Pillow' or change the output format to 'html'.", file=sys.stderr)
         sys.exit(1)
 
+    # 1.5 Parse VLANs CSV if provided
+    vlan_to_ip_range = {}
+    if args.vlans:
+        if not os.path.exists(args.vlans):
+            print(f"Error: VLANs CSV file not found at {args.vlans}", file=sys.stderr)
+            sys.exit(1)
+        try:
+            with open(args.vlans, mode="r", encoding="utf-8-sig") as f:
+                reader = csv.DictReader(f)
+                headers = [h.strip() for h in reader.fieldnames]
+                reader.fieldnames = headers
+                cidr_col = "IP Range" if "IP Range" in headers else ("CIDR" if "CIDR" in headers else None)
+                if "VLAN ID" not in headers or not cidr_col:
+                    print(f"Error: VLANs CSV must contain 'VLAN ID' and 'IP Range' or 'CIDR' in headers: {headers}", file=sys.stderr)
+                    sys.exit(1)
+                for row in reader:
+                    row = {k.strip(): v.strip() for k, v in row.items()}
+                    vid = row["VLAN ID"]
+                    ipr = row[cidr_col]
+                    if vid and ipr:
+                        vlan_to_ip_range[vid] = ipr
+        except Exception as e:
+            print(f"Error parsing VLANs CSV: {e}", file=sys.stderr)
+            sys.exit(1)
+
     # 2. Parse Assets CSV
     assets = []
     ip_to_asset = {}
@@ -531,6 +725,7 @@ def main():
     vlan_to_assets = {}
     vlan_to_zone = {}
     zone_order = config.get("zone_order", ["WAN", "IT", "DMZ", "IACS", "IOT", "Facility"])
+    lens_col_name = config.get("lens_column", "State")
 
     if not os.path.exists(args.assets):
         print(f"Error: Assets CSV file not found at {args.assets}", file=sys.stderr)
@@ -544,7 +739,7 @@ def main():
             reader.fieldnames = headers
             
             # Check mandatory fields
-            mandatory = ["Hostname", "IP address", "MAC address", "VLAN ID", "Zone"]
+            mandatory = ["Hostname", "IP address", "VLAN ID", "Zone"]
             for field in mandatory:
                 if field not in headers:
                     print(f"Error: Assets CSV missing mandatory field '{field}' in headers: {headers}", file=sys.stderr)
@@ -553,15 +748,27 @@ def main():
             for line_no, row in enumerate(reader, start=2):
                 row = {k.strip(): v.strip() for k, v in row.items()}
                 
-                # Check for empty mandatory values
-                for field in ["MAC address", "VLAN ID", "Zone"]:
-                    if not row.get(field):
-                        print(f"Error: Assets CSV (line {line_no}) has empty field '{field}'. Value: {row}", file=sys.stderr)
-                        sys.exit(1)
+                hostname = row.get("Hostname", "")
+                mac = row.get("MAC address", "").strip()
+                vlan_id = row.get("VLAN ID", "").strip()
+                zone = row.get("Zone", "").strip()
+                qty = row.get("Quantity", "").strip()
+                state = row.get(lens_col_name, "").strip()
+                
+                # Check for empty mandatory values (MAC address is optional if Quantity is set)
+                if not mac and not qty:
+                    print(f"Error: Assets CSV (line {line_no}) has empty MAC address and no Quantity is set. Value: {row}", file=sys.stderr)
+                    sys.exit(1)
+                
+                if not vlan_id or not zone:
+                    print(f"Error: Assets CSV (line {line_no}) has empty VLAN ID or Zone. Value: {row}", file=sys.stderr)
+                    sys.exit(1)
 
-                mac = row["MAC address"]
-                vlan_id = row["VLAN ID"]
-                zone = row["Zone"]
+                if not mac:
+                    # Generate a unique synthetic MAC address
+                    safe_hostname = hostname.replace(" ", "_")
+                    mac = f"AUTO_MAC_{line_no}_{safe_hostname}"
+                    row["MAC address"] = mac
                 
                 if zone not in zone_order:
                     print(f"Error: Assets CSV (line {line_no}) has zone '{zone}' which is not defined in config's 'zone_order'.", file=sys.stderr)
@@ -581,6 +788,8 @@ def main():
                     ips = [ip.strip() for ip in ip_field.replace(",", ";").split(";") if ip.strip()]
 
                 row["IPs"] = ips
+                row["Quantity"] = qty
+                row["State"] = state
                 assets.append(row)
                 mac_to_asset[mac] = row
                 
@@ -590,6 +799,14 @@ def main():
                 if vlan_id not in vlan_to_assets:
                     vlan_to_assets[vlan_id] = []
                 vlan_to_assets[vlan_id].append(row)
+
+                # Validation warning if IP does not belong to VLAN range
+                if vlan_id in vlan_to_ip_range:
+                    vlan_cidr = vlan_to_ip_range[vlan_id]
+                    for ip in ips:
+                        if '/' not in ip and '-' not in ip and ip != "WAN" and ip_to_int(ip) is not None:
+                            if not ip_in_cidr(ip, vlan_cidr):
+                                print(f"Warning: Asset '{hostname}' (line {line_no}) has IP '{ip}' which does not belong to VLAN {vlan_id} range '{vlan_cidr}'", file=sys.stderr)
     except Exception as e:
         print(f"Error parsing assets CSV: {e}", file=sys.stderr)
         sys.exit(1)
@@ -606,7 +823,9 @@ def main():
                 "MAC address": "WAN",
                 "Comment": "External Network / WAN",
                 "VLAN ID": "WAN",
-                "Zone": "WAN"
+                "Zone": "WAN",
+                "Quantity": "",
+                "State": ""
             }
             assets.append(wan_asset)
             mac_to_asset["WAN"] = wan_asset
@@ -643,7 +862,7 @@ def main():
                     sys.exit(1)
 
                 # Validate source reference
-                src_vlan = get_flow_endpoint_vlan(src, ip_to_asset)
+                src_vlan = get_flow_endpoint_vlan(src, ip_to_asset, assets)
                 if not src_vlan:
                     # check if src matches any VLAN ID directly
                     if src in vlan_to_assets:
@@ -653,7 +872,7 @@ def main():
                         sys.exit(1)
 
                 # Validate destination reference
-                dst_vlan = get_flow_endpoint_vlan(dst, ip_to_asset)
+                dst_vlan = get_flow_endpoint_vlan(dst, ip_to_asset, assets)
                 if not dst_vlan:
                     if dst in vlan_to_assets:
                         dst_vlan = dst
@@ -772,11 +991,27 @@ def main():
             else:
                 vlan_pad_y_val = 22
                 
+            # If any asset in row 0 has a quantity (meaning it is a stacked box),
+            # increase vlan_pad_y_val by 8px to keep clearance.
+            has_stacked_on_row_0 = any(
+                (a_idx // cols == 0) and asset.get("Quantity")
+                for a_idx, asset in enumerate(v_assets)
+            )
+            if has_stacked_on_row_0:
+                vlan_pad_y_val += 8
+                
             vlan_pad_x_val = 22
             vlan_pad_x[vlan] = vlan_pad_x_val
             vlan_pad_y[vlan] = vlan_pad_y_val
             
             w_vlan = 2 * vlan_pad_x_val + cols * asset_box_w + (cols - 1) * gap_x
+            
+            # Dynamically expand w_vlan if the VLAN label is wider than the grid
+            label_text = f"VLAN {vlan} - {vlan_to_ip_range[vlan]}" if vlan in vlan_to_ip_range else f"VLAN {vlan}"
+            estimated_label_w = len(label_text) * 8.0 + 40
+            if w_vlan < estimated_label_w:
+                w_vlan = estimated_label_w
+                
             h_vlan = 2 * vlan_pad_y_val + rows * asset_box_h + (rows - 1) * gap_y
             vlan_widths[vlan] = w_vlan
             vlan_heights[vlan] = h_vlan
@@ -886,8 +1121,10 @@ def main():
     def get_flow_sides(f):
         src_val = f["src"]
         dst_val = f["dst"]
-        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
-        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
+        matched_src = match_ip_to_asset(src_val, ip_to_asset, assets)
+        matched_dst = match_ip_to_asset(dst_val, ip_to_asset, assets)
+        src_key = matched_src["MAC address"] if matched_src else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = matched_dst["MAC address"] if matched_dst else ("WAN" if dst_val == "WAN" else dst_val)
         
         sz = vlan_to_zone[f["src_vlan"]]
         dz = vlan_to_zone[f["dst_vlan"]]
@@ -916,8 +1153,10 @@ def main():
         src_val = f["src"]
         dst_val = f["dst"]
         
-        bx_s = asset_boxes.get(ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else src_val)
-        bx_d = asset_boxes.get(ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else dst_val)
+        matched_src = match_ip_to_asset(src_val, ip_to_asset, assets)
+        matched_dst = match_ip_to_asset(dst_val, ip_to_asset, assets)
+        bx_s = asset_boxes.get(matched_src["MAC address"] if matched_src else src_val)
+        bx_d = asset_boxes.get(matched_dst["MAC address"] if matched_dst else dst_val)
         
         # fallback if not found
         if not bx_s:
@@ -1140,8 +1379,10 @@ def main():
         src_val = f["src"]
         dst_val = f["dst"]
         
-        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
-        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
+        matched_src = match_ip_to_asset(src_val, ip_to_asset, assets)
+        matched_dst = match_ip_to_asset(dst_val, ip_to_asset, assets)
+        src_key = matched_src["MAC address"] if matched_src else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = matched_dst["MAC address"] if matched_dst else ("WAN" if dst_val == "WAN" else dst_val)
         
         src_side, dst_side = get_flow_sides(f)
         add_conn(src_key, f_id, src_side)
@@ -1166,23 +1407,25 @@ def main():
         dst_val = f["dst"]
         
         # Get Source box
-        if src_val in ip_to_asset:
-            bx_s = asset_boxes[ip_to_asset[src_val]["MAC address"]]
+        matched_src = match_ip_to_asset(src_val, ip_to_asset, assets)
+        if matched_src:
+            bx_s = asset_boxes[matched_src["MAC address"]]
         elif src_val == "WAN":
             bx_s = asset_boxes["WAN"]
         else:
             bx_s = vlan_boxes[src_val]
 
         # Get Destination box
-        if dst_val in ip_to_asset:
-            bx_d = asset_boxes[ip_to_asset[dst_val]["MAC address"]]
+        matched_dst = match_ip_to_asset(dst_val, ip_to_asset, assets)
+        if matched_dst:
+            bx_d = asset_boxes[matched_dst["MAC address"]]
         elif dst_val == "WAN":
             bx_d = asset_boxes["WAN"]
         else:
             bx_d = vlan_boxes[dst_val]
 
-        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
-        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
+        src_key = matched_src["MAC address"] if matched_src else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = matched_dst["MAC address"] if matched_dst else ("WAN" if dst_val == "WAN" else dst_val)
 
         sz = vlan_to_zone[f["src_vlan"]]
         dz = vlan_to_zone[f["dst_vlan"]]
@@ -1415,6 +1658,9 @@ def main():
     
     if output_format == "html":
         canvas = SVGCanvas(canvas_w, canvas_h, bg_color)
+        canvas.states = states_config
+        canvas.lens_col_name = lens_col_name
+        canvas.lens_enabled_by_default = args.lens
     else:
         canvas = PILCanvas(canvas_w, canvas_h, bg_color)
 
@@ -1462,9 +1708,17 @@ def main():
         )
         
         # VLAN label text
+        if vlan == "WAN":
+            vlan_label = "WAN Interface"
+        else:
+            if vlan in vlan_to_ip_range:
+                vlan_label = f"VLAN {vlan} - {vlan_to_ip_range[vlan]}"
+            else:
+                vlan_label = f"VLAN {vlan}"
+                
         canvas.draw_text(
             x1 + 10, y1 + 10,
-            text=f"VLAN {vlan}" if vlan != "WAN" else "WAN Interface",
+            text=vlan_label,
             font_size=10,
             color=vlan_style["stroke"],
             align="left",
@@ -1481,22 +1735,107 @@ def main():
         "mac_color": "#64748b"
     })
 
+    static_lens_active = (output_format == "png" and args.lens)
+
     for asset in assets:
         mac = asset["MAC address"]
         if mac not in asset_boxes:
             continue
             
         x1, y1, x2, y2 = asset_boxes[mac]
+        qty_val = asset.get("Quantity", "")
         
-        # Draw box container
-        canvas.draw_rect(
-            x1, y1, x2 - x1, y2 - y1,
-            fill_color=asset_style["fill"],
-            border_color=asset_style["stroke"],
-            border_width=1.5,
-            rx=4, ry=4,
-            layer="assets"
-        )
+        # Colors & styling determination
+        fill = asset_style["fill"]
+        stroke = asset_style["stroke"]
+        text_color = asset_style["text_color"]
+        ip_color = asset_style["ip_color"]
+        mac_color = asset_style["mac_color"]
+        
+        state_val = asset.get("State", "")
+        has_state = False
+        state_style = {}
+        if state_val and state_val in states_config:
+            has_state = True
+            state_style = states_config[state_val]
+            
+        if static_lens_active:
+            if has_state:
+                fill = state_style.get("fill", fill)
+                stroke = state_style.get("stroke", stroke)
+                text_color = state_style.get("text_color", text_color)
+                ip_color = state_style.get("ip_color", ip_color)
+                mac_color = state_style.get("mac_color", mac_color)
+            else:
+                # Dim non-state assets in static PNG
+                fill = "#f8fafc"
+                stroke = "#cbd5e1"
+                text_color = "#cbd5e1"
+                ip_color = "#cbd5e1"
+                mac_color = "#cbd5e1"
+                
+        # Interactive lens target attributes (HTML only)
+        state_attrs = None
+        ip_state_attrs = None
+        mac_state_attrs = None
+        if output_format == "html":
+            if has_state:
+                state_attrs = {
+                    "data-state": state_val,
+                    "data-default-fill": asset_style["fill"],
+                    "data-state-fill": state_style.get("fill", asset_style["fill"]),
+                    "data-default-stroke": asset_style["stroke"],
+                    "data-state-stroke": state_style.get("stroke", asset_style["stroke"]),
+                    "data-default-color": asset_style["text_color"],
+                    "data-state-color": state_style.get("text_color", asset_style["text_color"])
+                }
+                ip_state_attrs = {
+                    "data-state": state_val,
+                    "data-default-color": asset_style["ip_color"],
+                    "data-state-color": state_style.get("ip_color", state_style.get("text_color", asset_style["ip_color"]))
+                }
+                mac_state_attrs = {
+                    "data-state": state_val,
+                    "data-default-color": asset_style["mac_color"],
+                    "data-state-color": state_style.get("mac_color", state_style.get("text_color", asset_style["mac_color"]))
+                }
+            else:
+                state_attrs = {
+                    "data-default-fill": asset_style["fill"],
+                    "data-default-stroke": asset_style["stroke"],
+                    "data-default-color": asset_style["text_color"]
+                }
+                ip_state_attrs = {
+                    "data-default-color": asset_style["ip_color"]
+                }
+                mac_state_attrs = {
+                    "data-default-color": asset_style["mac_color"]
+                }
+
+        # Draw box container(s)
+        if qty_val:
+            # Stacked rectangles (3 assets representation)
+            for offset in [6, 3, 0]:
+                canvas.draw_rect(
+                    x1 - offset, y1 - offset, x2 - x1, y2 - y1,
+                    fill_color=fill,
+                    border_color=stroke,
+                    border_width=1.5,
+                    rx=4, ry=4,
+                    layer="assets",
+                    state_attrs=state_attrs
+                )
+        else:
+            # Single standard rectangle
+            canvas.draw_rect(
+                x1, y1, x2 - x1, y2 - y1,
+                fill_color=fill,
+                border_color=stroke,
+                border_width=1.5,
+                rx=4, ry=4,
+                layer="assets",
+                state_attrs=state_attrs
+            )
         
         # Write asset info
         # 1. Hostname (bold)
@@ -1504,32 +1843,36 @@ def main():
             (x1 + x2)/2, y1 + 14,
             text=asset["Hostname"],
             font_size=10,
-            color=asset_style["text_color"],
+            color=text_color,
             align="center",
             bold=True,
-            layer="assets"
+            layer="assets",
+            state_attrs=state_attrs
         )
         
-        # 2. IP Address (emphasized)
+        # 2. IP Address / Range (emphasized)
         ips_str = ", ".join(asset["IPs"])
         canvas.draw_text(
             (x1 + x2)/2, y1 + 28,
             text=ips_str,
             font_size=9,
-            color=asset_style["ip_color"],
+            color=ip_color,
             align="center",
             bold=True,
-            layer="assets"
+            layer="assets",
+            state_attrs=ip_state_attrs
         )
         
-        # 3. MAC address (smaller/subtle)
+        # 3. MAC address or Quantity label
+        third_line_text = f"Qty: {qty_val}" if qty_val else asset["MAC address"]
         canvas.draw_text(
             (x1 + x2)/2, y1 + 42,
-            text=asset["MAC address"],
+            text=third_line_text,
             font_size=8,
-            color=asset_style["mac_color"],
+            color=mac_color,
             align="center",
-            layer="assets"
+            layer="assets",
+            state_attrs=mac_state_attrs
         )
         
         # 4. Comment (small italic)
@@ -1543,10 +1886,11 @@ def main():
                 (x1 + x2)/2, y1 + 56,
                 text=comment,
                 font_size=7.5,
-                color=asset_style["mac_color"],
+                color=mac_color,
                 align="center",
                 italic=True,
-                layer="assets"
+                layer="assets",
+                state_attrs=mac_state_attrs
             )
 
     # 4. Render Flow Lines with Bridge Humps and Arrowheads

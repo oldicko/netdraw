@@ -1,6 +1,23 @@
 {
   "theme": "light",
   "output_format": "png",
+  "lens_column": "State",
+  "states": {
+    "to be migrated": {
+      "fill": "#fff3e0",
+      "stroke": "#ff9800",
+      "text_color": "#e65100",
+      "ip_color": "#e65100",
+      "mac_color": "#e65100"
+    },
+    "migrated": {
+      "fill": "#e8f5e9",
+      "stroke": "#4caf50",
+      "text_color": "#1b5e20",
+      "ip_color": "#1b5e20",
+      "mac_color": "#1b5e20"
+    }
+  },
   "dimensions": {
     "width": 1200,
     "height": 1697
