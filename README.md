@@ -2,7 +2,13 @@
 
 A Python utility that generates rich, circuit-diagram-style network drawings for Operational Technology (OT) environments. By parsing simple asset, flow, and VLAN CSV files, it produces high-resolution static PNGs or interactive, self-contained HTML/SVG diagrams with zoom, pan, and layer/lens control capabilities.
 
-![Example Network Diagram](map.png)
+## Sample Network Diagrams
+
+### Standard View (Dynamic VLAN Subnets & Stacked Quantity Assets)
+![Standard Network Diagram](map.png)
+
+### State Lens Active View (State-Based Asset Color-Coding)
+![State Lens Network Diagram](map_lens.png)
 
 ---
 
