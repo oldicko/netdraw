@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# OT Network Diagram Generator (netdraw)
+#
+# SECURITY & PRIVACY NOTICE:
+# This script processes sensitive network configuration (assets, VLANs, flows)
+# and is designed to run 100% OFFLINE.
+# - No outbound or inbound network connections are made.
+# - No telemetry, tracker, or external requests are initiated.
+# - Generated HTML/SVG outputs are completely self-contained (no remote CDNs/APIs).
+# ==============================================================================
 import os
 import sys
 import csv
@@ -53,6 +63,7 @@ class SVGCanvas:
         self.vlans = []
         self.assets = []
         self.flows = []
+        self.labels = []
         
     def draw_rect(self, x, y, w, h, fill_color, border_color, border_width, dashed=False, rx=0, ry=0, layer="assets"):
         dash_attr = ' stroke-dasharray="6,4"' if dashed else ''
@@ -64,15 +75,36 @@ class SVGCanvas:
         svg_elem = f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="{width}"{dash_attr} />'
         self.add_to_layer(layer, svg_elem)
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets"):
         weight = ' font-weight="bold"' if bold else ''
         style = ' font-style="italic"' if italic else ''
         anchor = ' text-anchor="middle"' if align == "center" else ' text-anchor="start"' if align == "left" else ' text-anchor="end"'
         escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         dy = ' dy="0.35em"' if align in ("center", "left", "right") else ''
         if bg_color:
-            svg_halo = f'<text x="{x}" y="{y}" fill="{bg_color}" stroke="{bg_color}" stroke-width="4" stroke-linejoin="round" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
-            self.add_to_layer(layer, svg_halo)
+            if bg_style == "halo":
+                svg_halo = f'<text x="{x}" y="{y}" fill="{bg_color}" stroke="{bg_color}" stroke-width="4" stroke-linejoin="round" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
+                self.add_to_layer(layer, svg_halo)
+            else:
+                char_width = 0.58 if bold else 0.52
+                text_w = len(text) * font_size * char_width
+                text_h = font_size * 1.25
+                pad_x = 4
+                pad_y = 2
+                w = text_w + 2 * pad_x
+                h = text_h + 2 * pad_y
+                
+                if align == "center":
+                    rx = x - w / 2
+                elif align == "left":
+                    rx = x - pad_x
+                else:
+                    rx = x - w + pad_x
+                ry = y - h / 2
+                
+                svg_bg = f'<rect x="{rx}" y="{ry}" width="{w}" height="{h}" fill="{bg_color}" stroke="none" />'
+                self.add_to_layer(layer, svg_bg)
+            
         svg_elem = f'<text x="{x}" y="{y}" fill="{color}" font-size="{font_size}"{weight}{style}{anchor}{dy}>{escaped_text}</text>'
         self.add_to_layer(layer, svg_elem)
 
@@ -92,6 +124,8 @@ class SVGCanvas:
             self.vlans.append(elem)
         elif layer == "assets":
             self.assets.append(elem)
+        elif layer == "labels":
+            self.labels.append(elem)
         else:
             self.flows.append(elem)
 
@@ -257,6 +291,7 @@ class SVGCanvas:
     // Layer control toggles
     document.getElementById('chk-zones').addEventListener('change', (e) => {{
       document.getElementById('layer-zones').style.opacity = e.target.checked ? '1' : '0.1';
+      document.getElementById('layer-labels').style.opacity = e.target.checked ? '1' : '0.1';
     }});
     document.getElementById('chk-vlans').addEventListener('change', (e) => {{
       document.getElementById('layer-vlans').style.display = e.target.checked ? 'inline' : 'none';
@@ -298,6 +333,12 @@ class SVGCanvas:
         # Flows Layer
         lines.append('  <g id="layer-flows" style="transition: opacity 0.2s;">')
         for item in self.flows:
+            lines.append(f'    {item}')
+        lines.append('  </g>')
+        
+        # Labels Layer (rendered on top of flows, transitions with zones)
+        lines.append('  <g id="layer-labels" style="transition: opacity 0.2s;">')
+        for item in self.labels:
             lines.append(f'    {item}')
         lines.append('  </g>')
         
@@ -358,7 +399,7 @@ class PILCanvas:
         else:
             self.draw.line([int(x1), int(y1), int(x2), int(y2)], fill=color, width=int(width))
 
-    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, layer="assets"):
+    def draw_text(self, x, y, text, font_size, color, align="center", bold=False, italic=False, bg_color=None, bg_style="rect", layer="assets"):
         font = get_pil_font(None, font_size, bold)
         try:
             bbox = self.draw.textbbox((0, 0), text, font=font)
@@ -378,9 +419,18 @@ class PILCanvas:
             ty = y - h/2
             
         if bg_color:
-            self.draw.text((int(tx), int(ty)), text, font=font, fill=color, stroke_width=2, stroke_fill=bg_color)
-        else:
-            self.draw.text((int(tx), int(ty)), text, font=font, fill=color)
+            if bg_style == "halo":
+                self.draw.text((int(tx), int(ty)), text, font=font, fill=color, stroke_width=2, stroke_fill=bg_color)
+            else:
+                pad_x = 4
+                pad_y = 2
+                rx1 = tx - pad_x
+                ry1 = ty - pad_y
+                rx2 = tx + w + pad_x
+                ry2 = ty + h + pad_y
+                self.draw.rectangle([int(rx1), int(ry1), int(rx2), int(ry2)], fill=bg_color)
+            
+        self.draw.text((int(tx), int(ty)), text, font=font, fill=color)
 
     def draw_path(self, d, color, width, layer="flows"):
         parts = d.split()
@@ -444,6 +494,8 @@ def main():
     parser.add_argument("-o", "--output", help="Path to output diagram file (.html or .png)")
     
     args = parser.parse_args()
+
+    print("netdraw: Running in offline mode (all data processed locally, zero network connections).")
 
     # 1. Load config
     if not os.path.exists(args.config):
@@ -671,199 +723,394 @@ def main():
             for i, v in enumerate(zone_vlans[zone]):
                 vlan_pos[v] = i / max(1, len(zone_vlans[zone]) - 1)
 
-    # Canvas Dimensions
-    dim = config.get("dimensions", {"width": 1200, "height": 1697})
-    canvas_w = dim.get("width", 1200)
-    canvas_h = dim.get("height", 1697)
+    # 4. Geometrical layouts for VLANs and Assets: Grid Structure Determination
+    vlan_grids = {}
+    vlan_widths = {}
+    vlan_heights = {}
+    vlan_pad_x = {}
+    vlan_pad_y = {}
+    asset_grid_pos = {}
+    asset_grid_pos["WAN"] = (0, 1)
 
-    # 4. Proportional Zone Height Sizing
-    margin_top = 60
-    margin_bottom = 60
-    available_h = canvas_h - margin_top - margin_bottom
-
-    # Base weight and proportional content weighting
-    # Minimum 120px height per zone, extra height based on assets
-    base_zone_h = 120
-    allocated_h = {}
-    total_assets = max(1, len(assets))
-    
-    # Calculate assets in each zone
-    zone_asset_counts = {z: 0 for z in zone_order}
-    for asset in assets:
-        z = asset["Zone"]
-        if z in zone_asset_counts:
-            zone_asset_counts[z] += 1
-
-    remaining_h = available_h - (len(zone_order) * base_zone_h)
-    
-    # Distribute remaining height
-    total_h = 0
-    for idx, zone in enumerate(zone_order):
-        extra_h = remaining_h * (zone_asset_counts[zone] / total_assets)
-        allocated_h[zone] = int(base_zone_h + extra_h)
-        total_h += allocated_h[zone]
-
-    # Adjust final zone height to fill available_h exactly
-    diff = available_h - total_h
-    allocated_h[zone_order[-1]] += diff
-
-    # Set up Y boundaries for each zone
-    zone_y_ranges = {}
-    curr_y = margin_top
-    for zone in zone_order:
-        zone_y_ranges[zone] = (curr_y, curr_y + allocated_h[zone])
-        curr_y += allocated_h[zone]
-
-    # 5. Geometrical layouts for VLANs and Assets
-    vlan_boxes = {}
-    asset_boxes = {}
-    
     asset_box_w = 142
     asset_box_h = 74
     gap_x = 18
     gap_y = 18
-    vlan_pad = 22
+    
+    # Pre-populate same-VLAN flows to determine dynamic padding
+    vlan_same_flows = {}
+    for f in flows:
+        f_id = f["id"]
+        if f["src_vlan"] == f["dst_vlan"]:
+            vlan = f["src_vlan"]
+            if vlan not in vlan_same_flows:
+                vlan_same_flows[vlan] = []
+            vlan_same_flows[vlan].append(f_id)
 
     for zone in zone_order:
-        y_start, y_end = zone_y_ranges[zone]
-        # Top label padding: 35px, Bottom boundary channel: 30px
-        usable_y_start = y_start + 35
-        usable_y_end = y_end - 30
-        zone_h_usable = usable_y_end - usable_y_start
-
         vlans = zone_vlans[zone]
-        if not vlans:
-            continue
-
-        # Compute dimensions for each VLAN box
-        vlan_widths = {}
-        vlan_heights = {}
-        vlan_grids = {}
-
         for vlan in vlans:
             v_assets = vlan_to_assets.get(vlan, [])
             n_assets = len(v_assets)
             
             if n_assets == 0:
                 cols, rows = 1, 1
-            elif n_assets <= 3:
+            elif n_assets <= 5:
                 cols, rows = n_assets, 1
-            elif n_assets == 4:
-                cols, rows = 2, 2
             else:
                 cols = math.ceil(math.sqrt(n_assets))
                 rows = math.ceil(n_assets / cols)
 
             vlan_grids[vlan] = (cols, rows)
-            w_vlan = 2 * vlan_pad + cols * asset_box_w + (cols - 1) * gap_x
-            h_vlan = 2 * vlan_pad + rows * asset_box_h + (rows - 1) * gap_y
+            # Calculate dynamic vertical padding based on same-VLAN flows
+            v_flows = vlan_same_flows.get(vlan, [])
+            if v_flows:
+                # We need enough padding to clear all same-VLAN lanes
+                # Each lane takes 8px, plus base offset of 10px, plus 15px clearance
+                n_lanes = len(v_flows)
+                vlan_pad_y_val = max(22, 10 + (n_lanes - 1) * 8 + 15)
+            else:
+                vlan_pad_y_val = 22
+                
+            vlan_pad_x_val = 22
+            vlan_pad_x[vlan] = vlan_pad_x_val
+            vlan_pad_y[vlan] = vlan_pad_y_val
+            
+            w_vlan = 2 * vlan_pad_x_val + cols * asset_box_w + (cols - 1) * gap_x
+            h_vlan = 2 * vlan_pad_y_val + rows * asset_box_h + (rows - 1) * gap_y
             vlan_widths[vlan] = w_vlan
             vlan_heights[vlan] = h_vlan
 
-        # Distribute VLANs horizontally in range [100, 1100] (width 1000)
-        total_w = sum(vlan_widths.values())
-        left_margin = 100
-        right_margin = 1100
-        net_w = right_margin - left_margin
-
-        if len(vlans) == 1:
-            spacing = 0
-            start_x = left_margin + (net_w - total_w) / 2
-        else:
-            spacing = (net_w - total_w) / (len(vlans) + 1)
-            # Cap minimum spacing to 20px
-            if spacing < 20:
-                spacing = 20
-            start_x = left_margin + spacing
-
-        for i, vlan in enumerate(vlans):
-            w_vlan = vlan_widths[vlan]
-            h_vlan = vlan_heights[vlan]
-            
-            # Center VLAN vertically in the zone's usable Y space
-            vlan_y_start = usable_y_start + (zone_h_usable - h_vlan) / 2
-            
-            x1 = start_x
-            y1 = vlan_y_start
-            x2 = x1 + w_vlan
-            y2 = y1 + h_vlan
-            
-            vlan_boxes[vlan] = (x1, y1, x2, y2)
-            start_x += w_vlan + spacing
-
-            # Layout assets inside this VLAN
-            v_assets = vlan_to_assets.get(vlan, [])
-            cols, rows = vlan_grids[vlan]
-            
             for a_idx, asset in enumerate(v_assets):
-                col = a_idx % cols
                 row = a_idx // cols
-                
-                ax1 = x1 + vlan_pad + col * (asset_box_w + gap_x)
-                ay1 = y1 + vlan_pad + row * (asset_box_h + gap_y)
-                ax2 = ax1 + asset_box_w
-                ay2 = ay1 + asset_box_h
-                
-                asset_boxes[asset["MAC address"]] = (ax1, ay1, ax2, ay2)
+                asset_grid_pos[asset["MAC address"]] = (row, rows)
 
-    # ==============================================================================
-    # Flow Routing
-    # ==============================================================================
-    # Set up boundary channels & margins lane allocation
-    # 5 boundary channels (between consecutive zones)
+    # 5. Geometrical layouts: X Coordinates Calculation & Multi-Page A4 Canvas Width
+    num_pages_x = 1
+    page_w = 1200
+    canvas_h = 1697  # Initialized; will be dynamically expanded to multiple of page_h later
+    vlan_boxes = {}
+    asset_boxes = {}
+
+    while True:
+        canvas_w = num_pages_x * page_w
+        x_margins = [page_w * k for k in range(1, num_pages_x)]
+        right_margin = canvas_w - 100
+        fits = True
+        
+        vlan_boxes = {}
+        asset_boxes = {}
+        
+        for zone in zone_order:
+            vlans = zone_vlans[zone]
+            if not vlans:
+                continue
+                
+            spacing = 40
+            start_x = 100 + spacing
+            
+            for vlan in vlans:
+                w_vlan = vlan_widths[vlan]
+                x1 = start_x
+                x2 = x1 + w_vlan
+                
+                # Check and push repeatedly to avoid all X margins (page joins)
+                overlapping = True
+                while overlapping:
+                    overlapping = False
+                    for x_m in x_margins:
+                        if not (x2 <= x_m - 45 or x1 >= x_m + 45):
+                            x1 = x_m + 45
+                            x2 = x1 + w_vlan
+                            overlapping = True
+                            break
+                            
+                if x2 > right_margin:
+                    fits = False
+                    break
+                    
+                vlan_boxes[vlan] = [x1, 0, x2, 0]
+                start_x = x2 + spacing
+                
+                v_assets = vlan_to_assets.get(vlan, [])
+                cols, rows = vlan_grids[vlan]
+                for a_idx, asset in enumerate(v_assets):
+                    col = a_idx % cols
+                    row = a_idx // cols
+                    ax1 = x1 + vlan_pad_x[vlan] + col * (asset_box_w + gap_x)
+                    ax2 = ax1 + asset_box_w
+                    asset_boxes[asset["MAC address"]] = [ax1, 0, ax2, 0]
+                    
+            if not fits:
+                break
+                
+        if fits:
+            break
+        else:
+            num_pages_x += 1
+
+    # Position the WAN asset box, centering it but avoiding X margins
+    if "WAN" in asset_boxes:
+        x_c = canvas_w / 2
+        for x_m in x_margins:
+            if abs(x_c - x_m) < 100:
+                x_c = x_m - 100
+                break
+        asset_boxes["WAN"] = [x_c - 71, 0, x_c + 71, 0]
+
+    # Calculate rightmost content boundary
+    max_content_x = 0
+    if vlan_boxes:
+        max_content_x = max(max_content_x, max(bx[2] for bx in vlan_boxes.values()))
+    if asset_boxes:
+        max_content_x = max(max_content_x, max(bx[2] for bx in asset_boxes.values()))
+
+    # 6. Flow Routing Assignment (pre-calculate channels and lanes)
     boundary_channels = [[] for _ in range(len(zone_order) - 1)]
-    intra_zone_channels = [[] for _ in range(len(zone_order))]
     left_margin_flows = []
     right_margin_flows = []
 
-    # Assign flows to channels
-    for f in flows:
+    def get_preferred_side(box_key, target_zone_idx, current_zone_idx):
+        if box_key in asset_grid_pos:
+            row, rows = asset_grid_pos[box_key]
+            if rows > 1:
+                if row < rows / 2:
+                    return "top"
+                else:
+                    return "bottom"
+        if current_zone_idx < target_zone_idx:
+            return "bottom"
+        else:
+            return "top"
+
+    def get_flow_sides(f):
+        src_val = f["src"]
+        dst_val = f["dst"]
+        src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
+        dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
+        
         sz = vlan_to_zone[f["src_vlan"]]
         dz = vlan_to_zone[f["dst_vlan"]]
         s_idx = zone_order.index(sz)
         d_idx = zone_order.index(dz)
-
-        if s_idx != d_idx:
-            # Inter-zone flow
-            if abs(s_idx - d_idx) == 1:
-                # Adjacent boundary channel
-                b_idx = min(s_idx, d_idx)
-                boundary_channels[b_idx].append(f["id"])
+        
+        if f["src_vlan"] == f["dst_vlan"]:
+            r_s, _ = asset_grid_pos.get(src_key, (0, 1))
+            r_d, _ = asset_grid_pos.get(dst_key, (0, 1))
+            if r_s == r_d:
+                side = "top" if r_s == 0 else "bottom"
+                return side, side
             else:
-                # Bypass flow (uses source and target boundary channels + margin)
-                b_src = s_idx if s_idx < d_idx else s_idx - 1
-                b_dst = d_idx - 1 if s_idx < d_idx else d_idx
-                boundary_channels[b_src].append(f["id"])
-                boundary_channels[b_dst].append(f["id"])
-                
-                # Determine which margin to bypass through
-                # Calculate simple horizontal center-of-mass
-                cx_s = 600
-                if f["src"] in asset_boxes:
-                    bx = asset_boxes[f["src"]]
-                    cx_s = (bx[0] + bx[2]) / 2
-                elif f["src_vlan"] in vlan_boxes:
-                    bx = vlan_boxes[f["src_vlan"]]
-                    cx_s = (bx[0] + bx[2]) / 2
-
-                cx_d = 600
-                if f["dst"] in asset_boxes:
-                    bx = asset_boxes[f["dst"]]
-                    cx_d = (bx[0] + bx[2]) / 2
-                elif f["dst_vlan"] in vlan_boxes:
-                    bx = vlan_boxes[f["dst_vlan"]]
-                    cx_d = (bx[0] + bx[2]) / 2
-
-                if (cx_s + cx_d) / 2 < canvas_w / 2:
-                    left_margin_flows.append(f["id"])
-                    f["margin"] = "left"
+                if r_s > r_d:
+                    return "top", "bottom"
                 else:
-                    right_margin_flows.append(f["id"])
-                    f["margin"] = "right"
+                    return "bottom", "top"
         else:
-            # Intra-zone flow
-            if f["src_vlan"] != f["dst_vlan"]:
-                intra_zone_channels[s_idx].append(f["id"])
+            src_side = get_preferred_side(src_key, d_idx, s_idx)
+            dst_side = get_preferred_side(dst_key, s_idx, d_idx)
+            return src_side, dst_side
+
+    # Assign flows to channels
+    for f in flows:
+        f_id = f["id"]
+        src_val = f["src"]
+        dst_val = f["dst"]
+        
+        bx_s = asset_boxes.get(ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else src_val)
+        bx_d = asset_boxes.get(ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else dst_val)
+        
+        # fallback if not found
+        if not bx_s:
+            bx_s = vlan_boxes.get(src_val, [0, 0, 0, 0])
+        if not bx_d:
+            bx_d = vlan_boxes.get(dst_val, [0, 0, 0, 0])
+            
+        sz = vlan_to_zone[f["src_vlan"]]
+        dz = vlan_to_zone[f["dst_vlan"]]
+        s_idx = zone_order.index(sz)
+        d_idx = zone_order.index(dz)
+        
+        if f["src_vlan"] == f["dst_vlan"]:
+            pass
+        else:
+            src_side, dst_side = get_flow_sides(f)
+            c_src = max(0, s_idx - 1) if src_side == "top" else min(len(zone_order) - 2, s_idx)
+            c_dst = max(0, d_idx - 1) if dst_side == "top" else min(len(zone_order) - 2, d_idx)
+            
+            if c_src == c_dst:
+                boundary_channels[c_src].append(f_id)
+            else:
+                boundary_channels[c_src].append(f_id)
+                boundary_channels[c_dst].append(f_id)
+                
+                cx_s = (bx_s[0] + bx_s[2]) / 2
+                cx_d = (bx_d[0] + bx_d[2]) / 2
+                
+                p_src = int(cx_s // 1200)
+                p_dst = int(cx_d // 1200)
+                
+                if p_src != p_dst:
+                    left_margin_flows.append(f_id)
+                    f["margin"] = "left"
+                elif p_src == 1:
+                    right_margin_flows.append(f_id)
+                    f["margin"] = "right"
+                else:
+                    avg_x = (cx_s + cx_d) / 2
+                    if avg_x < 600:
+                        left_margin_flows.append(f_id)
+                        f["margin"] = "left"
+                    else:
+                        right_margin_flows.append(f_id)
+                        f["margin"] = "right"
+
+    # Pre-populate same VLAN flow lanes
+    flow_same_vlan_lanes = {}
+    for vlan, f_ids in vlan_same_flows.items():
+        for l_idx, f_id in enumerate(f_ids):
+            flow_same_vlan_lanes[f_id] = l_idx
+
+    # 7. Compute Dynamic Zone Heights and Clearances
+    margin_top = 45
+    margin_bottom = 45
+    
+    zone_clearances = {}
+    zone_min_heights = {}
+    
+    for idx, zone in enumerate(zone_order):
+        vlans = zone_vlans[zone]
+        if not vlans:
+            zone_min_heights[zone] = 120
+            zone_clearances[zone] = (25, 20)
+            continue
+            
+        N_chan_above = len(boundary_channels[idx - 1]) if idx > 0 else 0
+        N_chan_below = len(boundary_channels[idx]) if idx < len(zone_order) - 1 else 0
+        
+        N_same_top_max = 0
+        N_same_bottom_max = 0
+        
+        for vlan in vlans:
+            v_flows = vlan_same_flows.get(vlan, [])
+            l_top_max = -1
+            l_bottom_max = -1
+            for f_id in v_flows:
+                # Find the flow object
+                f_obj = next(fl for fl in flows if fl["id"] == f_id)
+                s_side, d_side = get_flow_sides(f_obj)
+                l_idx = flow_same_vlan_lanes[f_id]
+                if s_side == "top" and d_side == "top":
+                    l_top_max = max(l_top_max, l_idx)
+                elif s_side == "bottom" and d_side == "bottom":
+                    l_bottom_max = max(l_bottom_max, l_idx)
+            
+            N_same_top_max = max(N_same_top_max, l_top_max + 1)
+            N_same_bottom_max = max(N_same_bottom_max, l_bottom_max + 1)
+            
+        # Clearances calculations to guarantee no overlaps:
+        pad_top = 20 + N_chan_above * 8 + N_same_top_max * 8
+        pad_bottom = 16 + N_chan_below * 8 + N_same_bottom_max * 8
+        
+        zone_clearances[zone] = (pad_top, pad_bottom)
+        
+        # Max VLAN height in this zone
+        max_vlan_h = max(vlan_heights[v] for v in vlans)
+        zone_min_heights[zone] = pad_top + max_vlan_h + pad_bottom
+
+    # Determine canvas_h dynamically as a multiple of 1697 (page_h)
+    num_pages_y = 1
+    page_h = 1697
+    
+    while True:
+        canvas_h = num_pages_y * page_h
+        y_margins = [page_h * k for k in range(1, num_pages_y)]
+        
+        zone_y_ranges = {}
+        allocated_h = {}
+        curr_y = margin_top
+        fits = True
+        
+        for idx, zone in enumerate(zone_order):
+            vlans = zone_vlans[zone]
+            pad_top, pad_bottom = zone_clearances[zone]
+            max_vlan_h = max(vlan_heights[v] for v in vlans) if vlans else 0
+            
+            # If the current Y coordinate (top boundary of the zone) overlaps any Y margin, push it past
+            for y_m in y_margins:
+                if abs(curr_y - y_m) < 45:
+                    curr_y = y_m + 45
+            
+            # Check if the VLAN box range [curr_y + pad_top, curr_y + pad_top + max_vlan_h] overlaps any Y margin
+            for y_m in y_margins:
+                vlan_start = curr_y + pad_top
+                vlan_end = vlan_start + max_vlan_h
+                if not (vlan_end <= y_m - 45 or vlan_start >= y_m + 45):
+                    # Overlaps! Push the entire zone to start after the margin
+                    curr_y = y_m + 45
+                    break
+            
+            # In our margin-avoidance layout, each zone is allocated its minimum required height
+            h_zone = zone_min_heights[zone]
+            
+            zone_y_ranges[zone] = (curr_y, curr_y + h_zone)
+            allocated_h[zone] = h_zone
+            curr_y += h_zone
+            
+        if curr_y > canvas_h - margin_bottom:
+            fits = False
+            
+        if fits:
+            break
+        else:
+            num_pages_y += 1
+
+    # 8. Geometrical layouts: Assign Y Coordinates
+    for zone in zone_order:
+        y_start, y_end = zone_y_ranges[zone]
+        vlans = zone_vlans[zone]
+        if not vlans:
+            continue
+            
+        pad_top, pad_bottom = zone_clearances[zone]
+        max_vlan_h = max(vlan_heights[v] for v in vlans)
+        
+        # Distribute the zone's extra height (over its minimum required height) evenly
+        zone_extra = allocated_h[zone] - zone_min_heights[zone]
+        
+        for vlan in vlans:
+            h_vlan = vlan_heights[vlan]
+            # Center the VLAN box within the zone's vertical height, adjusted for clearances
+            y1 = y_start + pad_top + zone_extra / 2 + (max_vlan_h - h_vlan) / 2
+            y2 = y1 + h_vlan
+            
+            vlan_boxes[vlan][1] = y1
+            vlan_boxes[vlan][3] = y2
+            
+            v_assets = vlan_to_assets.get(vlan, [])
+            cols, rows = vlan_grids[vlan]
+            
+            for a_idx, asset in enumerate(v_assets):
+                row = a_idx // cols
+                ay1 = y1 + vlan_pad_y[vlan] + row * (asset_box_h + gap_y)
+                ay2 = ay1 + asset_box_h
+                
+                mac = asset["MAC address"]
+                asset_boxes[mac][1] = ay1
+                asset_boxes[mac][3] = ay2
+
+    # WAN box Y coordinates (WAN Gateway is in WAN zone)
+    if "WAN" in asset_boxes:
+        y_start, y_end = zone_y_ranges["WAN"]
+        # Center it in WAN zone
+        asset_boxes["WAN"][1] = y_start + (allocated_h["WAN"] - asset_box_h) / 2
+        asset_boxes["WAN"][3] = asset_boxes["WAN"][1] + asset_box_h
+        
+        # Center the WAN VLAN boundary box around the WAN Gateway asset box
+        if "WAN" in vlan_boxes:
+            ax1, ay1, ax2, ay2 = asset_boxes["WAN"]
+            pad_x = vlan_pad_x.get("WAN", 22)
+            pad_y = vlan_pad_y.get("WAN", 22)
+            vlan_boxes["WAN"] = [ax1 - pad_x, ay1 - pad_y, ax2 + pad_x, ay2 + pad_y]
 
     # Allocate lanes
     flow_horizontal_lanes = {}  # (flow_id, channel_idx) -> lane_index
@@ -871,22 +1118,10 @@ def main():
         for l_idx, f_id in enumerate(f_ids):
             flow_horizontal_lanes[(f_id, c_idx)] = l_idx
 
-    flow_intra_lanes = {}  # flow_id -> lane_index
-    for z_idx, f_ids in enumerate(intra_zone_channels):
-        for l_idx, f_id in enumerate(f_ids):
-            flow_intra_lanes[f_id] = l_idx
-
     flow_left_margin_lanes = {f_id: idx for idx, f_id in enumerate(left_margin_flows)}
     flow_right_margin_lanes = {f_id: idx for idx, f_id in enumerate(right_margin_flows)}
 
-    # Map VLAN box Y bottom coordinates to place intra-zone channels below them
-    zone_max_bottoms = {}
-    for zone in zone_order:
-        vlans = zone_vlans[zone]
-        bottoms = [vlan_boxes[v][3] for v in vlans if v in vlan_boxes]
-        zone_max_bottoms[zone] = max(bottoms) if bottoms else zone_y_ranges[zone][0] + 80
-
-    # Build maps of flow connections per box edge to space out endpoints
+    # Build connection port maps for spacing
     top_connections = {}
     bottom_connections = {}
     
@@ -908,20 +1143,9 @@ def main():
         src_key = ip_to_asset[src_val]["MAC address"] if src_val in ip_to_asset else ("WAN" if src_val == "WAN" else src_val)
         dst_key = ip_to_asset[dst_val]["MAC address"] if dst_val in ip_to_asset else ("WAN" if dst_val == "WAN" else dst_val)
         
-        sz = vlan_to_zone[f["src_vlan"]]
-        dz = vlan_to_zone[f["dst_vlan"]]
-        s_idx = zone_order.index(sz)
-        d_idx = zone_order.index(dz)
-        
-        if s_idx < d_idx:
-            add_conn(src_key, f_id, "bottom")
-            add_conn(dst_key, f_id, "top")
-        elif s_idx > d_idx:
-            add_conn(src_key, f_id, "top")
-            add_conn(dst_key, f_id, "bottom")
-        else:
-            add_conn(src_key, f_id, "bottom")
-            add_conn(dst_key, f_id, "bottom")
+        src_side, dst_side = get_flow_sides(f)
+        add_conn(src_key, f_id, src_side)
+        add_conn(dst_key, f_id, dst_side)
 
     def get_conn_x(box_key, bx, side, flow_id):
         conns = top_connections.get(box_key, []) if side == "top" else bottom_connections.get(box_key, [])
@@ -965,99 +1189,161 @@ def main():
         s_idx = zone_order.index(sz)
         d_idx = zone_order.index(dz)
 
-        # Get shifted horizontal connection coordinates to prevent overlaps
-        if s_idx < d_idx:
-            cx_s = get_conn_x(src_key, bx_s, "bottom", f_id)
-            cx_d = get_conn_x(dst_key, bx_d, "top", f_id)
-        elif s_idx > d_idx:
-            cx_s = get_conn_x(src_key, bx_s, "top", f_id)
-            cx_d = get_conn_x(dst_key, bx_d, "bottom", f_id)
-        else:
-            cx_s = get_conn_x(src_key, bx_s, "bottom", f_id)
-            cx_d = get_conn_x(dst_key, bx_d, "bottom", f_id)
+        src_side, dst_side = get_flow_sides(f)
+        cx_s = get_conn_x(src_key, bx_s, src_side, f_id)
+        cx_d = get_conn_x(dst_key, bx_d, dst_side, f_id)
 
         path_pts = []
 
-        if s_idx < d_idx:
-            # Source above destination (downwards flow)
-            start_pt = (cx_s, bx_s[3])
-            end_pt = (cx_d, bx_d[1])
+        if f["src_vlan"] == f["dst_vlan"]:
+            # Same VLAN flow: route internally using row-based gap/offset
+            r_s, rows_s = asset_grid_pos.get(src_key, (0, 1))
+            r_d, rows_d = asset_grid_pos.get(dst_key, (0, 1))
+            l_idx = flow_same_vlan_lanes.get(f_id, 0)
             
-            if d_idx == s_idx + 1:
-                # Adjacent
-                j = flow_horizontal_lanes[(f_id, s_idx)]
-                y_lane = zone_y_ranges[sz][1] - 15 + j * 10
+            if r_s == r_d:
+                if r_s == 0:
+                    start_pt = (cx_s, bx_s[1])
+                    end_pt = (cx_d, bx_d[1])
+                    y_lane = bx_s[1] - 10 - l_idx * 8
+                else:
+                    start_pt = (cx_s, bx_s[3])
+                    end_pt = (cx_d, bx_d[3])
+                    y_lane = bx_s[3] + 10 + l_idx * 8
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
             else:
-                # Bypass margin routing
-                j1 = flow_horizontal_lanes[(f_id, s_idx)]
-                j2 = flow_horizontal_lanes[(f_id, d_idx - 1)]
-                y_start = zone_y_ranges[sz][1] - 15 + j1 * 10
-                y_end = zone_y_ranges[dz][0] - 15 + j2 * 10
-                
-                if f["margin"] == "left":
-                    m_lane = flow_left_margin_lanes[f_id]
-                    x_bypass = 70 - m_lane * 10
+                if r_s > r_d:
+                    start_pt = (cx_s, bx_s[1])
+                    end_pt = (cx_d, bx_d[3])
+                    y_lane = (bx_s[1] + bx_d[3]) / 2 + (l_idx - 1) * 8
                 else:
-                    m_lane = flow_right_margin_lanes[f_id]
-                    x_bypass = 1130 + m_lane * 10
-                    
-                path_pts = [
-                    start_pt,
-                    (cx_s, y_start),
-                    (x_bypass, y_start),
-                    (x_bypass, y_end),
-                    (cx_d, y_end),
-                    end_pt
-                ]
-        elif s_idx > d_idx:
-            # Source below destination (upwards flow)
-            start_pt = (cx_s, bx_s[1])
-            end_pt = (cx_d, bx_d[3])
-            
-            if s_idx == d_idx + 1:
-                # Adjacent
-                j = flow_horizontal_lanes[(f_id, d_idx)]
-                y_lane = zone_y_ranges[dz][1] - 15 + j * 10
+                    start_pt = (cx_s, bx_s[3])
+                    end_pt = (cx_d, bx_d[1])
+                    y_lane = (bx_s[3] + bx_d[1]) / 2 + (l_idx - 1) * 8
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
-            else:
-                # Bypass margin routing
-                j1 = flow_horizontal_lanes[(f_id, s_idx - 1)]
-                j2 = flow_horizontal_lanes[(f_id, d_idx)]
-                y_start = zone_y_ranges[sz][0] - 15 + j1 * 10
-                y_end = zone_y_ranges[dz][1] - 15 + j2 * 10
-                
-                if f["margin"] == "left":
-                    m_lane = flow_left_margin_lanes[f_id]
-                    x_bypass = 70 - m_lane * 10
-                else:
-                    m_lane = flow_right_margin_lanes[f_id]
-                    x_bypass = 1130 + m_lane * 10
-                    
-                path_pts = [
-                    start_pt,
-                    (cx_s, y_start),
-                    (x_bypass, y_start),
-                    (x_bypass, y_end),
-                    (cx_d, y_end),
-                    end_pt
-                ]
         else:
-            # Same zone flow
-            if f["src_vlan"] != f["dst_vlan"]:
-                # Different VLANs, route below the VLAN boxes inside the zone
-                start_pt = (cx_s, bx_s[3])
-                end_pt = (cx_d, bx_d[3])
-                j = flow_intra_lanes[f_id]
-                y_lane = zone_max_bottoms[sz] + 15 + j * 10
+            # Inter-VLAN flow: route via boundary channels and margins
+            c_src = max(0, s_idx - 1) if src_side == "top" else min(len(zone_order) - 2, s_idx)
+            c_dst = max(0, d_idx - 1) if dst_side == "top" else min(len(zone_order) - 2, d_idx)
+            
+            start_pt = (cx_s, bx_s[1] if src_side == "top" else bx_s[3])
+            end_pt = (cx_d, bx_d[1] if dst_side == "top" else bx_d[3])
+            
+            if c_src == c_dst:
+                j = flow_horizontal_lanes[(f_id, c_src)]
+                N = len(boundary_channels[c_src])
+                y_boundary = zone_y_ranges[zone_order[c_src]][1]
+                if N <= 1:
+                    y_lane = y_boundary - 12
+                else:
+                    half = N // 2
+                    if j < half:
+                        y_lane = y_boundary - 12 - (half - 1 - j) * 8
+                    else:
+                        y_lane = y_boundary + 12 + (j - half) * 8
                 path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
             else:
-                # Same VLAN flow (simple internal routing loop)
-                start_pt = (cx_s, bx_s[3])
-                end_pt = (cx_d, bx_d[3])
-                y_lane = bx_s[3] + 12
-                path_pts = [start_pt, (cx_s, y_lane), (cx_d, y_lane), end_pt]
-
+                j1 = flow_horizontal_lanes[(f_id, c_src)]
+                j2 = flow_horizontal_lanes[(f_id, c_dst)]
+                N_src = len(boundary_channels[c_src])
+                N_dst = len(boundary_channels[c_dst])
+                
+                y_bound_src = zone_y_ranges[zone_order[c_src]][1]
+                if N_src <= 1:
+                    y_start = y_bound_src - 12
+                else:
+                    half_src = N_src // 2
+                    if j1 < half_src:
+                        y_start = y_bound_src - 12 - (half_src - 1 - j1) * 8
+                    else:
+                        y_start = y_bound_src + 12 + (j1 - half_src) * 8
+                        
+                y_bound_dst = zone_y_ranges[zone_order[c_dst]][1]
+                if N_dst <= 1:
+                    y_end = y_bound_dst - 12
+                else:
+                    half_dst = N_dst // 2
+                    if j2 < half_dst:
+                        y_end = y_bound_dst - 12 - (half_dst - 1 - j2) * 8
+                    else:
+                        y_end = y_bound_dst + 12 + (j2 - half_dst) * 8
+                
+                p_src = int(cx_s // 1200)
+                p_dst = int(cx_d // 1200)
+                
+                if p_src != p_dst:
+                    x_m = 1200 * max(p_src, p_dst)
+                    m_lane = flow_left_margin_lanes.get(f_id, flow_right_margin_lanes.get(f_id, 0))
+                    x_bypass = x_m - 65 - m_lane * 10
+                else:
+                    p = p_src
+                    z_start = min(s_idx, d_idx)
+                    z_end = max(s_idx, d_idx)
+                    
+                    def is_col_free(x):
+                        for z in range(z_start + 1, z_end):
+                            zone = zone_order[z]
+                            for asset_mac, box in asset_boxes.items():
+                                if asset_mac == "WAN":
+                                    continue
+                                if asset_mac in mac_to_asset:
+                                    asset_zone = mac_to_asset[asset_mac]["Zone"]
+                                    if asset_zone == zone:
+                                        if box[0] - 15 <= x <= box[2] + 15:
+                                            return False
+                        return True
+                    
+                    if is_col_free(cx_d):
+                        x_bypass = cx_d
+                    elif is_col_free(cx_s):
+                        x_bypass = cx_s
+                    else:
+                        if f["margin"] == "left":
+                            m_lane = flow_left_margin_lanes[f_id]
+                            if p == 0:
+                                x_bypass = 35 - m_lane * 10
+                            else:
+                                x_m = 1200 * p
+                                x_bypass = x_m - 65 - m_lane * 10
+                        else:
+                            m_lane = flow_right_margin_lanes[f_id]
+                            if p == num_pages_x - 1:
+                                # Calculate local optimal x_bypass to avoid colliding with VLAN boxes
+                                x_bypass = max(cx_s, cx_d) + 30 + m_lane * 10
+                                while True:
+                                    overlap_found = False
+                                    for z in range(z_start, z_end + 1):
+                                        zone = zone_order[z]
+                                        for v in zone_vlans[zone]:
+                                            if v in vlan_boxes:
+                                                x1_v, _, x2_v, _ = vlan_boxes[v]
+                                                if int(x2_v // 1200) == p:
+                                                    if x1_v - 25 <= x_bypass <= x2_v + 25:
+                                                        x_bypass = x2_v + 30 + m_lane * 10
+                                                        overlap_found = True
+                                                        break
+                                        if overlap_found:
+                                            break
+                                    if not overlap_found:
+                                        break
+                                
+                                # Avoid page joins (x_margins)
+                                for x_m in x_margins:
+                                    if abs(x_bypass - x_m) < 45:
+                                        x_bypass = x_m + 45
+                            else:
+                                x_m = 1200 * (p + 1)
+                                x_bypass = x_m - 65 - m_lane * 10
+                    
+                path_pts = [
+                    start_pt,
+                    (cx_s, y_start),
+                    (x_bypass, y_start),
+                    (x_bypass, y_end),
+                    (cx_d, y_end),
+                    end_pt
+                ]
+                
         flow_paths[f_id] = path_pts
 
     # Detect segment intersections for bridge humps
@@ -1071,6 +1357,7 @@ def main():
             if p1[1] == p2[1]:  # Horizontal
                 horizontal_segments.append({
                     "flow_id": f_id,
+                    "seg_idx": i,
                     "y": p1[1],
                     "x1": min(p1[0], p2[0]),
                     "x2": max(p1[0], p2[0])
@@ -1083,10 +1370,11 @@ def main():
                     "y2": max(p1[1], p2[1])
                 })
 
-    # Record crossing intersections on horizontal segments
-    crossings = {}  # flow_id -> list of X coordinates
+    # Record crossing intersections on specific horizontal segments
+    crossings = {}  # (flow_id, seg_idx) -> list of X coordinates
     for h in horizontal_segments:
         h_flow = h["flow_id"]
+        seg_idx = h["seg_idx"]
         y = h["y"]
         x1 = h["x1"]
         x2 = h["x2"]
@@ -1101,9 +1389,22 @@ def main():
             
             # Intersection check
             if (x1 < x < x2) and (y1 < y < y2):
-                if h_flow not in crossings:
-                    crossings[h_flow] = []
-                crossings[h_flow].append(x)
+                h_path = flow_paths[h_flow]
+                v_path = flow_paths[v_flow]
+                
+                dist_h_start = math.hypot(x - h_path[0][0], y - h_path[0][1])
+                dist_h_end = math.hypot(x - h_path[-1][0], y - h_path[-1][1])
+                dist_v_start = math.hypot(x - v_path[0][0], y - v_path[0][1])
+                dist_v_end = math.hypot(x - v_path[-1][0], y - v_path[-1][1])
+                
+                if min(dist_h_start, dist_h_end, dist_v_start, dist_v_end) < 25:
+                    continue
+                    
+                key = (h_flow, seg_idx)
+                if key not in crossings:
+                    crossings[key] = []
+                if x not in crossings[key]:
+                    crossings[key].append(x)
 
     # ==============================================================================
     # Rendering Stage
@@ -1138,16 +1439,8 @@ def main():
             layer="zones"
         )
         
-        # Zone header label
-        canvas.draw_text(
-            60, y_start + 18,
-            text=style.get("label", zone),
-            font_size=13,
-            color=style["text_color"],
-            align="left",
-            bold=True,
-            layer="zones"
-        )
+        # (Zone label rendering moved to the end of main to ensure it draws on top of flows for masking)
+        pass
 
     # 2. Render VLAN Boundaries
     vlan_style = config.get("styles", {}).get("vlan_border", {
@@ -1263,10 +1556,11 @@ def main():
         "arrow_size": 6
     })
     
+    rendered_flow_labels = []
+    
     for f in flows:
         f_id = f["id"]
         path = flow_paths[f_id]
-        f_crossings = crossings.get(f_id, [])
         
         # Draw path
         d_parts = [f"M {path[0][0]} {path[0][1]}"]
@@ -1281,8 +1575,8 @@ def main():
                 x1 = p1[0]
                 x2 = p2[0]
                 
-                # Check intersections on this segment
-                seg_cross = [cx for cx in f_crossings if min(x1, x2) < cx < max(x1, x2)]
+                # Check intersections specifically on this segment (using flow_id and segment index)
+                seg_cross = crossings.get((f_id, i), [])
                 
                 if seg_cross:
                     if x1 < x2:
@@ -1345,6 +1639,7 @@ def main():
         # Centered flow comments
         # Find the longest horizontal segment in the path to draw text neatly
         longest_h = None
+        longest_h_idx = -1
         max_h_len = -1
         for i in range(len(path) - 1):
             p1 = path[i]
@@ -1354,22 +1649,110 @@ def main():
                 if length > max_h_len:
                     max_h_len = length
                     longest_h = (p1, p2)
+                    longest_h_idx = i
                     
         comment_text = f.get("comment", "")
         if comment_text:
             label_bg = bg_color
             if longest_h:
                 p1, p2 = longest_h
-                x_mid = (p1[0] + p2[0]) / 2
+                x_min = min(p1[0], p2[0])
+                x_max = max(p1[0], p2[0])
                 y = p1[1]
+                
+                # Gather all avoidance X coordinates within [x_min, x_max] to prevent label overlapping vertical lines/VLAN borders
+                avoid_xs = []
+                
+                # 1. Vertical flow segments (any vertical segment that intersects the horizontal span)
+                for v in vertical_segments:
+                    if v["y1"] <= y <= v["y2"]:
+                        vx = v["x"]
+                        if x_min < vx < x_max:
+                            avoid_xs.append(vx)
+                            
+                # 2. VLAN boundaries (any vertical boundary coordinate that intersects this range)
+                for vlan, box in vlan_boxes.items():
+                    vx1, vy1, vx2, vy2 = box
+                    if vy1 <= y <= vy2:
+                        if x_min < vx1 < x_max:
+                            avoid_xs.append(vx1)
+                        if x_min < vx2 < x_max:
+                            avoid_xs.append(vx2)
+                            
+                # Deduplicate and sort
+                avoid_xs = sorted(list(set(avoid_xs)))
+                
+                if not avoid_xs:
+                    x_pos = (x_min + x_max) / 2
+                else:
+                    # Find the largest gap between avoidance points or segment endpoints
+                    all_pts = [x_min] + avoid_xs + [x_max]
+                    best_gap = -1
+                    x_pos = (x_min + x_max) / 2
+                    for idx in range(len(all_pts) - 1):
+                        gap = all_pts[idx+1] - all_pts[idx]
+                        if gap > best_gap:
+                            best_gap = gap
+                            x_pos = (all_pts[idx] + all_pts[idx+1]) / 2
+                
+                # Estimate text size and adjust position to avoid overlap with other flow labels
+                tw = len(comment_text) * 4.4
+                th = 12
+                
+                def has_overlap(x_test):
+                    box_test = (x_test - tw/2 - 4, y - th/2 - 2, x_test + tw/2 + 4, y + th/2 + 2)
+                    for r_box in rendered_flow_labels:
+                        if not (box_test[2] <= r_box[0] or box_test[0] >= r_box[2] or
+                                box_test[3] <= r_box[1] or box_test[1] >= r_box[3]):
+                            return True
+                    return False
+
+                chosen_x = x_pos
+                min_overlap_count = 99999
+                best_x = x_pos
+                
+                max_shift = min(180, (x_max - x_min) / 2)
+                shifts = [0]
+                for step in range(1, 21):
+                    shift_val = step * 12
+                    if shift_val <= max_shift:
+                        shifts.append(shift_val)
+                        shifts.append(-shift_val)
+                
+                found_non_overlap = False
+                for dx in shifts:
+                    tx = x_pos + dx
+                    if x_min + tw/2 + 5 <= tx <= x_max - tw/2 - 5:
+                        if not has_overlap(tx):
+                            chosen_x = tx
+                            found_non_overlap = True
+                            break
+                        else:
+                            box_test = (tx - tw/2 - 4, y - th/2 - 2, tx + tw/2 + 4, y + th/2 + 2)
+                            overlaps_cnt = 0
+                            for r_box in rendered_flow_labels:
+                                if not (box_test[2] <= r_box[0] or box_test[0] >= r_box[2] or
+                                        box_test[3] <= r_box[1] or box_test[1] >= r_box[3]):
+                                    overlaps_cnt += 1
+                            if overlaps_cnt < min_overlap_count:
+                                min_overlap_count = overlaps_cnt
+                                best_x = tx
+                                
+                if not found_non_overlap:
+                    chosen_x = best_x
+                
+                rendered_flow_labels.append((chosen_x - tw/2 - 4, y - th/2 - 2, chosen_x + tw/2 + 4, y + th/2 + 2))
+                x_pos = chosen_x
+
                 for z, (y_start, y_end) in zone_y_ranges.items():
                     if y_start <= y <= y_end:
                         label_bg = config.get("zones", {}).get(z, {}).get("fill", bg_color)
                         if label_bg == "none":
                             label_bg = bg_color
                         break
+                # Render centered on the horizontal line
                 canvas.draw_text(
-                    x_mid, y,
+                    x_pos, y,
                     text=comment_text,
                     font_size=8,
                     color=flow_style["stroke"],
@@ -1398,6 +1781,34 @@ def main():
                     bg_color=label_bg,
                     layer="flows"
                 )
+
+    # 5. Render Zone Labels (drawn last so they are on top of flow lines for masking)
+    zones_styles = config.get("zones", {})
+    for zone in zone_order:
+        y_start, y_end = zone_y_ranges[zone]
+        style = zones_styles.get(zone, {
+            "fill": "#fafafa",
+            "stroke": "#d1d5db",
+            "text_color": "#1f2937",
+            "label": zone
+        })
+        
+        # Use zone fill color as background color for text halo masking
+        label_bg = style["fill"]
+        if label_bg == "none":
+            label_bg = bg_color
+            
+        canvas.draw_text(
+            120, y_start + 18,
+            text=style.get("label", zone),
+            font_size=13,
+            color=style["text_color"],
+            align="left",
+            bold=True,
+            bg_color=label_bg,
+            bg_style="halo",
+            layer="labels"
+        )
 
     # 6. Save output
     default_out = "map.html" if output_format == "html" else "map.png"

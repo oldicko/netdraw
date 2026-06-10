@@ -1,13 +1,36 @@
 Hostname,IP address,MAC address,Comment,VLAN ID,Zone
 IT-Server-1,"10.10.1.10;10.10.1.11",00:11:22:33:44:55,Primary Active Directory,10,IT
-IT-Workstation-1,10.10.1.50,00:11:22:33:44:56,Admin workstation,10,IT
+IT-Server-2,10.10.1.12,00:11:22:33:44:5a,Backup Domain Controller,10,IT
+IT-Workstation-1,10.10.1.50,00:11:22:33:44:56,Admin workstation 1,10,IT
+IT-Workstation-2,10.10.1.51,00:11:22:33:44:5b,Admin workstation 2,10,IT
+IT-Printer-1,10.10.1.100,00:11:22:33:44:5c,Office Printer,10,IT
 Mail-Server,10.10.2.10,00:11:22:33:44:57,Mail Gateway,20,IT
+File-Server,10.10.2.20,00:11:22:33:44:5d,Corporate File Share,20,IT
 DMZ-Web,172.16.1.10,00:aa:bb:cc:dd:01,Web server,100,DMZ
 DMZ-Proxy,172.16.1.20,00:aa:bb:cc:dd:02,Reverse proxy,100,DMZ
+DMZ-DNS,172.16.1.30,00:aa:bb:cc:dd:03,External DNS Server,100,DMZ
+DMZ-Historian,172.16.2.10,00:aa:bb:cc:dd:04,Replicated Historian,110,DMZ
 PLC-1,192.168.1.10,00:50:56:a1:b2:c3,Siemens S7-1500,200,IACS
 PLC-2,192.168.1.11,00:50:56:a1:b2:c4,Rockwell ControlLogix,200,IACS
-HMI-1,192.168.1.50,00:50:56:a1:b2:c5,PanelView HMI,200,IACS
-SCADA-Server,"192.168.2.10;172.16.1.99",00:50:56:a1:b2:c6,Dual-homed SCADA host,210,IACS
+PLC-3,192.168.1.12,00:50:56:a1:b2:aa,Safety PLC,200,IACS
+HMI-1,192.168.1.50,00:50:56:a1:b2:c5,PanelView HMI 1,200,IACS
+HMI-2,192.168.1.51,00:50:56:a1:b2:ab,Safety HMI,200,IACS
+SCADA-Server,"192.168.2.10;172.16.1.99",00:50:56:a1:b2:c6,Primary SCADA Host,210,IACS
+SCADA-Backup,192.168.2.11,00:50:56:a1:b2:ad,Backup SCADA Host,210,IACS
+Historian-Server,192.168.2.20,00:50:56:a1:b2:ae,Process Historian,210,IACS
+Engineering-Station,192.168.2.50,00:50:56:a1:b2:af,Engineering Workstation,210,IACS
+SIS-Controller,192.168.3.10,00:50:56:a1:b2:b0,Safety Instrumentation,220,IACS
+SIS-HMI,192.168.3.50,00:50:56:a1:b2:b1,SIS Interface Console,220,IACS
 Temp-Sensor-1,10.50.1.10,00:11:99:88:77:66,Temperature sensor,300,IOT
+Temp-Sensor-2,10.50.1.11,00:11:99:88:77:6a,Humidity sensor,300,IOT
 Camera-1,10.50.1.20,00:11:99:88:77:67,Main gate CCTV,300,IOT
-HVAC-Controller,192.168.50.10,00:80:f4:11:22:33,Building management system,400,Facility
+Camera-2,10.50.1.21,00:11:99:88:77:6b,Control Room CCTV,300,IOT
+Vibration-Monitor,10.50.2.10,00:11:99:88:77:6c,Turbine Vibration,310,IOT
+Flow-Meter,10.50.2.20,00:11:99:88:77:6d,Fuel Flow Meter,310,IOT
+HVAC-Controller,192.168.50.10,00:80:f4:11:22:33,Chiller Controller,400,Facility
+Lighting-Gateway,192.168.50.20,00:80:f4:11:22:34,Office Lighting,400,Facility
+Access-Controller,192.168.50.30,00:80:f4:11:22:35,Door Access Control,400,Facility
+Fire-Alarm-Panel,192.168.50.40,00:80:f4:11:22:36,Fire alarm gateway,400,Facility
+UPS-Monitor,192.168.51.10,00:80:f4:11:22:37,Control Room UPS,410,Facility
+Power-Meter,192.168.51.20,00:80:f4:11:22:38,Main Power Meter,410,Facility
+Generator-Controller,192.168.51.30,00:80:f4:11:22:39,Diesel Gen Controller,410,Facility

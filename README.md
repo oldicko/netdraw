@@ -2,21 +2,24 @@
 
 A Python utility that generates rich, circuit-diagram-style network drawings for Operational Technology (OT) environments. By parsing simple asset and flow CSV files, it produces high-resolution static PNGs or interactive, self-contained HTML/SVG diagrams with zoom, pan, and layer control capabilities.
 
+![Example Network Diagram](map.png)
+
 ---
 
 ## Features
 
-- **Standard OT Security Zones**: Stacks zones vertically (e.g., WAN, IT, DMZ, IACS, IoT, Facility) according to the Purdue Model. Zone heights adjust proportionally based on asset count to fit a standard portrait A4 aspect ratio.
+- **Standard OT Security Zones**: Stacks zones vertically (e.g., WAN, IT, DMZ, IACS, IoT, Facility) according to the Purdue Model. The canvas dynamically calculates and scales to the minimum required grid of portrait A4 pages (supporting both multi-column and multi-row page grids) based on asset density.
 - **Horizontal VLAN Sorting**: Auto-arranges VLANs side-by-side using a barycenter sweep heuristic to minimize flow line crossovers.
-- **Asset Grid Layout**: Places devices inside their dashed VLAN borders in a clean 2D grid. Supports multi-homed devices with multiple IP addresses.
-- **Orthogonal Flow Routing**: Routes connections vertically and horizontally through dedicated channels between zones and VLANs. 
+- **Asset Grid Layout**: Places devices inside their dashed VLAN borders in a clean 2D grid. Packs up to 5 assets horizontally per row to minimize vertical height. Supports multi-homed devices with multiple IP addresses.
+- **Orthogonal Flow Routing**: Routes connections vertically and horizontally through dedicated channels between zones and VLANs. Automatically selects the shortest route, prioritizing direct vertical channels when clear of other assets, or utilizing page-join bypass corridors (with print-margin protection) and dynamic local margin bypasses.
 - **Lane Allocation**: Spreads parallel horizontal flows apart inside channels to prevent lines from overlapping.
 - **Bridge Humps**: Automatically detects line crossings and renders semicircular arch "humps" at intersection points (supported in both SVG/HTML and PNG outputs).
-- **Margin Bypass**: Routes long-distance flows (spanning non-adjacent zones) through vertical side corridors to keep the main diagram clean.
+- **Margin & Corridor Bypass**: Routes long-distance flows through vertical side corridors, local right-margin bypasses, or central corridors between page fold boundaries to keep the main diagram clean.
 - **Interactive HTML Canvas**: Embeds mouse-drag panning, mouse-wheel zooming, and check-boxes to toggle diagram layers (Zones, VLANs, Assets, Flows) fully offline.
 - **Custom Styling**: Shading, borders, typography, line weights, and colors are fully configurable through a JSON file.
 
 ---
+
 
 ## Installation
 
@@ -31,6 +34,16 @@ pip install Pillow
 ```
 
 *Note: Generating **HTML** diagrams has zero external dependencies.*
+
+---
+
+## Offline Security & Privacy
+
+This utility is designed with **zero network dependency** and **strict privacy** in mind. It is safe for use on air-gapped systems or secure environments:
+
+- **100% Local Execution**: The script operates entirely on your local machine. It does not initiate any internet connections or transmit data to external services.
+- **Zero External CDNs/APIs**: The generated interactive HTML file is completely self-contained. It embeds standard SVG elements and standard system font styling. It uses plain, vanilla JavaScript with no remote libraries, tracker scripts, or external dependencies (like Google Fonts or external CDNs).
+- **Inspectable Source Code**: Written in plain Python using standard library modules (plus the optional local `Pillow` library). You can easily review the code to verify that no networking or sockets are used.
 
 ---
 

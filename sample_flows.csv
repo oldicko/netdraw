@@ -1,9 +1,26 @@
 IP address source,IP address destination,Comment
-10.10.1.50,10.10.1.10,AD Authentication
-172.16.1.20,172.16.1.10,Web Traffic
-192.168.1.50,192.168.1.10,Modbus TCP
-10,20,Inter-VLAN IT Traffic
-210,200,SCADA Polling
-192.168.2.10,100,SCADA Historian Push
-WAN,172.16.1.20,HTTPS Web access
-10.10.2.10,WAN,Outgoing SMTP mail
+10.10.1.50,10.10.1.10,AD Auth 1
+10.10.1.51,10.10.1.12,AD Auth 2
+10.10.1.12,10.10.1.10,AD Replication
+10.10.1.51,10.10.1.100,Print Job
+10.10.1.10,10.10.2.10,Outgoing Mail
+10.10.2.10,WAN,SMTP Relay
+WAN,172.16.1.20,HTTPS Web Access
+172.16.1.20,172.16.1.10,Proxy Forward
+172.16.1.30,WAN,DNS Resolve
+192.168.2.10,172.16.2.10,Historian Sync
+192.168.2.10,192.168.1.10,Modbus Poll 1
+192.168.2.10,192.168.1.11,Modbus Poll 2
+192.168.2.11,192.168.2.10,SCADA Heartbeat
+192.168.1.50,192.168.1.10,HMI Control 1
+192.168.1.51,192.168.1.12,HMI Control 2
+192.168.2.50,192.168.1.11,PLC Programming
+192.168.1.12,192.168.3.10,Safety Interlock
+192.168.3.50,192.168.3.10,SIS Console Port
+10.50.1.10,192.168.2.20,Temp Upload
+10.50.1.20,192.168.2.20,CCTV Feed
+192.168.50.30,192.168.2.20,Access Log Upload
+192.168.50.40,192.168.2.10,Fire Alarm Alert
+192.168.51.20,192.168.2.20,Power Telemetry
+192.168.51.10,10.10.2.10,UPS Battery Alert
+192.168.51.30,10.10.2.10,Generator Alert

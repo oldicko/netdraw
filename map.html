@@ -80,139 +80,338 @@
   </div>
 
   <div id="canvas-container">
-    <svg id="network-svg" width="1200" height="1697" viewBox="0 0 1200 1697" xmlns="http://www.w3.org/2000/svg" style="background-color: #ffffff; font-family: system-ui, -apple-system, sans-serif;">
+    <svg id="network-svg" width="2400" height="1697" viewBox="0 0 2400 1697" xmlns="http://www.w3.org/2000/svg" style="background-color: #ffffff; font-family: system-ui, -apple-system, sans-serif;">
   <g id="layer-zones" style="transition: opacity 0.2s;">
-    <rect x="50" y="60" width="1100" height="185" fill="#eceff1" stroke="#b0bec5" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="78" fill="#37474f" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Wide Area Network (WAN)</text>
-    <rect x="50" y="245" width="1100" height="317" fill="#e3f2fd" stroke="#90caf9" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="263" fill="#0d47a1" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Enterprise IT (Zone 4/5)</text>
-    <rect x="50" y="562" width="1100" height="251" fill="#e0f7fa" stroke="#80deea" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="580" fill="#006064" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Demilitarized Zone (Zone 3.5)</text>
-    <rect x="50" y="813" width="1100" height="383" fill="#e8eaf6" stroke="#9fa8da" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="831" fill="#1a237e" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Industrial Control Systems (Zone 3)</text>
-    <rect x="50" y="1196" width="1100" height="251" fill="#e0f2f1" stroke="#80cbc4" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="1214" fill="#004d40" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Internet of Things (IoT)</text>
-    <rect x="50" y="1447" width="1100" height="190" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="1" rx="0" ry="0" />
-    <text x="60" y="1465" fill="#212121" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Facility / Safety (Zone 1/2)</text>
+    <rect x="50" y="45" width="2300" height="186" fill="#eceff1" stroke="#b0bec5" stroke-width="1" rx="0" ry="0" />
+    <rect x="50" y="231" width="2300" height="304" fill="#e3f2fd" stroke="#90caf9" stroke-width="1" rx="0" ry="0" />
+    <rect x="50" y="535" width="2300" height="240" fill="#e0f7fa" stroke="#80deea" stroke-width="1" rx="0" ry="0" />
+    <rect x="50" y="775" width="2300" height="272" fill="#e8eaf6" stroke="#9fa8da" stroke-width="1" rx="0" ry="0" />
+    <rect x="50" y="1047" width="2300" height="234" fill="#e0f2f1" stroke="#80cbc4" stroke-width="1" rx="0" ry="0" />
+    <rect x="50" y="1281" width="2300" height="194" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="1" rx="0" ry="0" />
   </g>
   <g id="layer-vlans" style="transition: opacity 0.2s;">
-    <rect x="507.0" y="96.0" width="186.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="517.0" y="106.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">WAN Interface</text>
-    <rect x="256.0" y="347.0" width="346.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="266.0" y="357.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 10</text>
-    <rect x="758.0" y="347.0" width="186.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="768.0" y="357.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 20</text>
-    <rect x="427.0" y="631.0" width="346.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="437.0" y="641.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 100</text>
-    <rect x="202.66666666666669" y="948.0" width="506.00000000000006" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="212.66666666666669" y="958.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 200</text>
-    <rect x="811.3333333333333" y="948.0" width="186.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="821.3333333333333" y="958.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 210</text>
-    <rect x="427.0" y="1265.0" width="346.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="437.0" y="1275.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 300</text>
-    <rect x="507.0" y="1485.5" width="186.0" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
-    <text x="517.0" y="1495.5" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 400</text>
+    <rect x="1007" y="79.0" width="186" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1017" y="89.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">WAN Interface</text>
+    <rect x="140" y="315.0" width="826" height="172.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="150" y="325.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 10</text>
+    <rect x="1245" y="342.0" width="346" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1255" y="352.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 20</text>
+    <rect x="140" y="595.0" width="506" height="124.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="150" y="605.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 100</text>
+    <rect x="686" y="598.0" width="186" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="696" y="608.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 110</text>
+    <rect x="140" y="851.0" width="826" height="140.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="150" y="861.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 200</text>
+    <rect x="1245" y="859.0" width="666" height="124.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1255" y="869.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 210</text>
+    <rect x="1951" y="859.0" width="346" height="124.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1961" y="869.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 220</text>
+    <rect x="140" y="1107.0" width="666" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="150" y="1117.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 300</text>
+    <rect x="1245" y="1107.0" width="346" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1255" y="1117.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 310</text>
+    <rect x="140" y="1341.0" width="666" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="150" y="1351.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 400</text>
+    <rect x="1245" y="1341.0" width="506" height="118.0" fill="none" stroke="#42a5f5" stroke-width="2" rx="6" ry="6" stroke-dasharray="6,4" />
+    <text x="1255" y="1351.0" fill="#42a5f5" font-size="10" font-weight="bold" text-anchor="start" dy="0.35em">VLAN 410</text>
   </g>
   <g id="layer-assets" style="transition: opacity 0.2s;">
-    <rect x="278.0" y="369.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="349.0" y="383.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Server-1</text>
-    <text x="349.0" y="397.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.10, 10.10.1.11</text>
-    <text x="349.0" y="411.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:55</text>
-    <text x="349.0" y="425.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Primary Active Direc..</text>
-    <rect x="438.0" y="369.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="509.0" y="383.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Workstation-1</text>
-    <text x="509.0" y="397.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.50</text>
-    <text x="509.0" y="411.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:56</text>
-    <text x="509.0" y="425.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Admin workstation</text>
-    <rect x="780.0" y="369.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="851.0" y="383.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Mail-Server</text>
-    <text x="851.0" y="397.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.2.10</text>
-    <text x="851.0" y="411.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:57</text>
-    <text x="851.0" y="425.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Mail Gateway</text>
-    <rect x="449.0" y="653.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="520.0" y="667.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-Web</text>
-    <text x="520.0" y="681.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.1.10</text>
-    <text x="520.0" y="695.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:01</text>
-    <text x="520.0" y="709.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Web server</text>
-    <rect x="609.0" y="653.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="680.0" y="667.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-Proxy</text>
-    <text x="680.0" y="681.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.1.20</text>
-    <text x="680.0" y="695.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:02</text>
-    <text x="680.0" y="709.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Reverse proxy</text>
-    <rect x="224.66666666666669" y="970.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="295.6666666666667" y="984.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">PLC-1</text>
-    <text x="295.6666666666667" y="998.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.10</text>
-    <text x="295.6666666666667" y="1012.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c3</text>
-    <text x="295.6666666666667" y="1026.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Siemens S7-1500</text>
-    <rect x="384.6666666666667" y="970.0" width="142.00000000000006" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="455.66666666666674" y="984.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">PLC-2</text>
-    <text x="455.66666666666674" y="998.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.11</text>
-    <text x="455.66666666666674" y="1012.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c4</text>
-    <text x="455.66666666666674" y="1026.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Rockwell ControlLogix</text>
-    <rect x="544.6666666666667" y="970.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="615.6666666666667" y="984.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">HMI-1</text>
-    <text x="615.6666666666667" y="998.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.50</text>
-    <text x="615.6666666666667" y="1012.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c5</text>
-    <text x="615.6666666666667" y="1026.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">PanelView HMI</text>
-    <rect x="833.3333333333333" y="970.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="904.3333333333333" y="984.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">SCADA-Server</text>
-    <text x="904.3333333333333" y="998.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.2.10, 172.16.1.99</text>
-    <text x="904.3333333333333" y="1012.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c6</text>
-    <text x="904.3333333333333" y="1026.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Dual-homed SCADA host</text>
-    <rect x="449.0" y="1287.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="520.0" y="1301.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Temp-Sensor-1</text>
-    <text x="520.0" y="1315.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.10</text>
-    <text x="520.0" y="1329.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:66</text>
-    <text x="520.0" y="1343.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Temperature sensor</text>
-    <rect x="609.0" y="1287.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="680.0" y="1301.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Camera-1</text>
-    <text x="680.0" y="1315.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.20</text>
-    <text x="680.0" y="1329.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:67</text>
-    <text x="680.0" y="1343.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Main gate CCTV</text>
-    <rect x="529.0" y="1507.5" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="600.0" y="1521.5" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">HVAC-Controller</text>
-    <text x="600.0" y="1535.5" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.50.10</text>
-    <text x="600.0" y="1549.5" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:33</text>
-    <text x="600.0" y="1563.5" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Building management ..</text>
-    <rect x="529.0" y="118.0" width="142.0" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
-    <text x="600.0" y="132.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">WAN Gateway</text>
-    <text x="600.0" y="146.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">WAN</text>
-    <text x="600.0" y="160.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">WAN</text>
-    <text x="600.0" y="174.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">External Network / WAN</text>
+    <rect x="162" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="233.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Server-1</text>
+    <text x="233.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.10, 10.10.1.11</text>
+    <text x="233.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:55</text>
+    <text x="233.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Primary Active Direc..</text>
+    <rect x="322" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="393.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Server-2</text>
+    <text x="393.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.12</text>
+    <text x="393.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:5a</text>
+    <text x="393.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Backup Domain Contro..</text>
+    <rect x="482" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="553.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Workstation-1</text>
+    <text x="553.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.50</text>
+    <text x="553.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:56</text>
+    <text x="553.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Admin workstation 1</text>
+    <rect x="642" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="713.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Workstation-2</text>
+    <text x="713.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.51</text>
+    <text x="713.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:5b</text>
+    <text x="713.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Admin workstation 2</text>
+    <rect x="802" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="873.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">IT-Printer-1</text>
+    <text x="873.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.1.100</text>
+    <text x="873.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:5c</text>
+    <text x="873.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Office Printer</text>
+    <rect x="1267" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1338.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Mail-Server</text>
+    <text x="1338.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.2.10</text>
+    <text x="1338.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:57</text>
+    <text x="1338.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Mail Gateway</text>
+    <rect x="1427" y="364.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1498.0" y="378.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">File-Server</text>
+    <text x="1498.0" y="392.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.10.2.20</text>
+    <text x="1498.0" y="406.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:22:33:44:5d</text>
+    <text x="1498.0" y="420.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Corporate File Share</text>
+    <rect x="162" y="620.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="233.0" y="634.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-Web</text>
+    <text x="233.0" y="648.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.1.10</text>
+    <text x="233.0" y="662.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:01</text>
+    <text x="233.0" y="676.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Web server</text>
+    <rect x="322" y="620.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="393.0" y="634.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-Proxy</text>
+    <text x="393.0" y="648.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.1.20</text>
+    <text x="393.0" y="662.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:02</text>
+    <text x="393.0" y="676.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Reverse proxy</text>
+    <rect x="482" y="620.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="553.0" y="634.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-DNS</text>
+    <text x="553.0" y="648.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.1.30</text>
+    <text x="553.0" y="662.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:03</text>
+    <text x="553.0" y="676.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">External DNS Server</text>
+    <rect x="708" y="620.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="779.0" y="634.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">DMZ-Historian</text>
+    <text x="779.0" y="648.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">172.16.2.10</text>
+    <text x="779.0" y="662.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:aa:bb:cc:dd:04</text>
+    <text x="779.0" y="676.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Replicated Historian</text>
+    <rect x="162" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="233.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">PLC-1</text>
+    <text x="233.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.10</text>
+    <text x="233.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c3</text>
+    <text x="233.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Siemens S7-1500</text>
+    <rect x="322" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="393.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">PLC-2</text>
+    <text x="393.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.11</text>
+    <text x="393.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c4</text>
+    <text x="393.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Rockwell ControlLogix</text>
+    <rect x="482" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="553.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">PLC-3</text>
+    <text x="553.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.12</text>
+    <text x="553.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:aa</text>
+    <text x="553.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Safety PLC</text>
+    <rect x="642" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="713.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">HMI-1</text>
+    <text x="713.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.50</text>
+    <text x="713.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c5</text>
+    <text x="713.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">PanelView HMI 1</text>
+    <rect x="802" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="873.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">HMI-2</text>
+    <text x="873.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.1.51</text>
+    <text x="873.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:ab</text>
+    <text x="873.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Safety HMI</text>
+    <rect x="1267" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1338.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">SCADA-Server</text>
+    <text x="1338.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.2.10, 172.16.1.99</text>
+    <text x="1338.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:c6</text>
+    <text x="1338.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Primary SCADA Host</text>
+    <rect x="1427" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1498.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">SCADA-Backup</text>
+    <text x="1498.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.2.11</text>
+    <text x="1498.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:ad</text>
+    <text x="1498.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Backup SCADA Host</text>
+    <rect x="1587" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1658.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Historian-Server</text>
+    <text x="1658.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.2.20</text>
+    <text x="1658.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:ae</text>
+    <text x="1658.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Process Historian</text>
+    <rect x="1747" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1818.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Engineering-Station</text>
+    <text x="1818.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.2.50</text>
+    <text x="1818.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:af</text>
+    <text x="1818.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Engineering Workstat..</text>
+    <rect x="1973" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="2044.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">SIS-Controller</text>
+    <text x="2044.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.3.10</text>
+    <text x="2044.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:b0</text>
+    <text x="2044.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Safety Instrumentation</text>
+    <rect x="2133" y="884.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="2204.0" y="898.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">SIS-HMI</text>
+    <text x="2204.0" y="912.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.3.50</text>
+    <text x="2204.0" y="926.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:50:56:a1:b2:b1</text>
+    <text x="2204.0" y="940.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">SIS Interface Console</text>
+    <rect x="162" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="233.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Temp-Sensor-1</text>
+    <text x="233.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.10</text>
+    <text x="233.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:66</text>
+    <text x="233.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Temperature sensor</text>
+    <rect x="322" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="393.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Temp-Sensor-2</text>
+    <text x="393.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.11</text>
+    <text x="393.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:6a</text>
+    <text x="393.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Humidity sensor</text>
+    <rect x="482" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="553.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Camera-1</text>
+    <text x="553.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.20</text>
+    <text x="553.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:67</text>
+    <text x="553.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Main gate CCTV</text>
+    <rect x="642" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="713.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Camera-2</text>
+    <text x="713.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.1.21</text>
+    <text x="713.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:6b</text>
+    <text x="713.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Control Room CCTV</text>
+    <rect x="1267" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1338.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Vibration-Monitor</text>
+    <text x="1338.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.2.10</text>
+    <text x="1338.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:6c</text>
+    <text x="1338.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Turbine Vibration</text>
+    <rect x="1427" y="1129.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1498.0" y="1143.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Flow-Meter</text>
+    <text x="1498.0" y="1157.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">10.50.2.20</text>
+    <text x="1498.0" y="1171.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:11:99:88:77:6d</text>
+    <text x="1498.0" y="1185.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Fuel Flow Meter</text>
+    <rect x="162" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="233.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">HVAC-Controller</text>
+    <text x="233.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.50.10</text>
+    <text x="233.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:33</text>
+    <text x="233.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Chiller Controller</text>
+    <rect x="322" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="393.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Lighting-Gateway</text>
+    <text x="393.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.50.20</text>
+    <text x="393.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:34</text>
+    <text x="393.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Office Lighting</text>
+    <rect x="482" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="553.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Access-Controller</text>
+    <text x="553.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.50.30</text>
+    <text x="553.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:35</text>
+    <text x="553.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Door Access Control</text>
+    <rect x="642" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="713.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Fire-Alarm-Panel</text>
+    <text x="713.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.50.40</text>
+    <text x="713.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:36</text>
+    <text x="713.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Fire alarm gateway</text>
+    <rect x="1267" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1338.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">UPS-Monitor</text>
+    <text x="1338.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.51.10</text>
+    <text x="1338.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:37</text>
+    <text x="1338.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Control Room UPS</text>
+    <rect x="1427" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1498.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Power-Meter</text>
+    <text x="1498.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.51.20</text>
+    <text x="1498.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:38</text>
+    <text x="1498.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Main Power Meter</text>
+    <rect x="1587" y="1363.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1658.0" y="1377.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">Generator-Controller</text>
+    <text x="1658.0" y="1391.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">192.168.51.30</text>
+    <text x="1658.0" y="1405.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">00:80:f4:11:22:39</text>
+    <text x="1658.0" y="1419.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">Diesel Gen Controller</text>
+    <rect x="1029" y="101.0" width="142" height="74.0" fill="#ffffff" stroke="#90caf9" stroke-width="1.5" rx="4" ry="4" />
+    <text x="1100.0" y="115.0" fill="#1565c0" font-size="10" font-weight="bold" text-anchor="middle" dy="0.35em">WAN Gateway</text>
+    <text x="1100.0" y="129.0" fill="#0d47a1" font-size="9" font-weight="bold" text-anchor="middle" dy="0.35em">WAN</text>
+    <text x="1100.0" y="143.0" fill="#546e7a" font-size="8" text-anchor="middle" dy="0.35em">WAN</text>
+    <text x="1100.0" y="157.0" fill="#546e7a" font-size="7.5" font-style="italic" text-anchor="middle" dy="0.35em">External Network / WAN</text>
   </g>
   <g id="layer-flows" style="transition: opacity 0.2s;">
-    <path d="M 509.0 443.0 L 509.0 455.0 L 349.0 455.0 L 349.0 443.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="346.0,449.0 349.0,443.0 352.0,449.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="429.0" y="455.0" fill="#e3f2fd" stroke="#e3f2fd" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">AD Authentication</text>
-    <text x="429.0" y="455.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">AD Authentication</text>
-    <path d="M 680.0 727.0 L 680.0 739.0 L 520.0 739.0 L 520.0 727.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="517.0,733.0 520.0,727.0 523.0,733.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="600.0" y="739.0" fill="#e0f7fa" stroke="#e0f7fa" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Web Traffic</text>
-    <text x="600.0" y="739.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Web Traffic</text>
-    <path d="M 615.6666666666667 1044.0 L 615.6666666666667 1056.0 L 295.6666666666667 1056.0 L 295.6666666666667 1044.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="292.6666666666667,1050.0 295.6666666666667,1044.0 298.6666666666667,1050.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="455.66666666666674" y="1056.0" fill="#e8eaf6" stroke="#e8eaf6" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Modbus TCP</text>
-    <text x="455.66666666666674" y="1056.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Modbus TCP</text>
-    <path d="M 429.0 465.0 L 429.0 480.0 L 851.0 480.0 L 851.0 465.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="848.0,471.0 851.0,465.0 854.0,471.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="640.0" y="480.0" fill="#e3f2fd" stroke="#e3f2fd" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Inter-VLAN IT Traffic</text>
-    <text x="640.0" y="480.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Inter-VLAN IT Traffic</text>
-    <path d="M 904.3333333333333 1066.0 L 904.3333333333333 1081.0 L 455.66666666666674 1081.0 L 455.66666666666674 1066.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="452.66666666666674,1072.0 455.66666666666674,1066.0 458.66666666666674,1072.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="680.0" y="1081.0" fill="#e8eaf6" stroke="#e8eaf6" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SCADA Polling</text>
-    <text x="680.0" y="1081.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SCADA Polling</text>
-    <path d="M 904.3333333333333 970.0 L 904.3333333333333 798 L 600.0 798 L 600.0 749.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="597.0,755.0 600.0,749.0 603.0,755.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="752.1666666666666" y="798" fill="#e0f7fa" stroke="#e0f7fa" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SCADA Historian Push</text>
-    <text x="752.1666666666666" y="798" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SCADA Historian Push</text>
-    <path d="M 576.3333333333334 192.0 L 576.3333333333334 230 L 618.6666666666666 230 A 5 5 0 0 0 628.6666666666666 230 L 1130 230 L 1130 547 L 680.0 547 L 680.0 653.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="677.0,647.0 680.0,653.0 683.0,647.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="853.1666666666667" y="230" fill="#eceff1" stroke="#eceff1" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">HTTPS Web access</text>
-    <text x="853.1666666666667" y="230" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">HTTPS Web access</text>
-    <path d="M 851.0 369.0 L 851.0 240 L 623.6666666666666 240 L 623.6666666666666 192.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
-    <polygon points="620.6666666666666,198.0 623.6666666666666,192.0 626.6666666666666,198.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
-    <text x="737.3333333333333" y="240" fill="#eceff1" stroke="#eceff1" stroke-width="4" stroke-linejoin="round" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Outgoing SMTP mail</text>
-    <text x="737.3333333333333" y="240" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Outgoing SMTP mail</text>
+    <path d="M 553.0 364.0 L 553.0 354.0 L 197.5 354.0 L 197.5 364.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="194.5,358.0 197.5,364.0 200.5,358.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="462.11333333333334" y="347.0" width="45.44" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="484.83333333333337" y="354.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">AD Auth 1</text>
+    <path d="M 689.3333333333334 364.0 L 689.3333333333334 346.0 L 369.3333333333333 346.0 L 369.3333333333333 364.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="366.3333333333333,358.0 369.3333333333333,364.0 372.3333333333333,358.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="530.28" y="339.0" width="45.44" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="553.0" y="346.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">AD Auth 2</text>
+    <path d="M 416.6666666666667 364.0 L 416.6666666666667 338.0 L 273.5 338.0 A 5 5 0 0 1 263.5 338.0 L 233.0 338.0 L 233.0 364.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="230.0,358.0 233.0,364.0 236.0,358.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="309.46333333333337" y="331.0" width="66.24000000000001" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="342.58333333333337" y="338.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">AD Replication</text>
+    <path d="M 736.6666666666666 364.0 L 736.6666666666666 330.0 L 873.0 330.0 L 873.0 364.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="870.0,358.0 873.0,364.0 876.0,358.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="782.1133333333332" y="323.0" width="45.44" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="804.8333333333333" y="330.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Print Job</text>
+    <path d="M 268.5 364.0 L 268.5 211 L 1059.5 211 A 5 5 0 0 0 1069.5 211 L 1095.0 211 A 5 5 0 0 0 1105.0 211 L 1130.5 211 A 5 5 0 0 0 1140.5 211 L 1314.3333333333333 211 L 1314.3333333333333 364.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1311.3333333333333,358.0 1314.3333333333333,364.0 1317.3333333333333,358.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="635.46" y="204.0" width="62.08" height="14.0" fill="#eceff1" stroke="none" />
+    <text x="666.5" y="211" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Outgoing Mail</text>
+    <path d="M 1361.6666666666667 364.0 L 1361.6666666666667 219 L 1319.3333333333333 219 A 5 5 0 0 1 1309.3333333333333 219 L 1140.5 219 A 5 5 0 0 1 1130.5 219 L 1100.0 219 L 1100.0 175.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1097.0,181.0 1100.0,175.0 1103.0,181.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1200.1166666666666" y="212.0" width="49.6" height="14.0" fill="#eceff1" stroke="none" />
+    <text x="1224.9166666666665" y="219" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SMTP Relay</text>
+    <path d="M 1135.5 175.0 L 1135.5 243 L 1135.5 243 L 1135.5 515 L 1069.5 515 A 5 5 0 0 1 1059.5 515 L 369.3333333333333 515 L 369.3333333333333 620.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="366.3333333333333,614.0 369.3333333333333,620.0 372.3333333333333,614.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="679.6366666666667" y="508.0" width="74.56" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="716.9166666666666" y="515" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">HTTPS Web Access</text>
+    <path d="M 416.6666666666667 620.0 L 416.6666666666667 610.0 L 233.0 610.0 L 233.0 620.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="230.0,614.0 233.0,620.0 236.0,614.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="270.1266666666666" y="603.0" width="62.08" height="14.0" fill="#e0f7fa" stroke="none" />
+    <text x="301.16666666666663" y="610.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Proxy Forward</text>
+    <path d="M 553.0 620.0 L 553.0 523 L 1064.5 523 L 1064.5 251 L 1064.5 251 L 1064.5 175.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1061.5,181.0 1064.5,175.0 1067.5,181.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="781.87" y="516.0" width="53.760000000000005" height="14.0" fill="#e3f2fd" stroke="none" />
+    <text x="808.75" y="523" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">DNS Resolve</text>
+    <path d="M 1295.4 884.0 L 1295.4 755 L 779.0 755 L 779.0 694.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="776.0,700.0 779.0,694.0 782.0,700.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1004.08" y="748.0" width="66.24000000000001" height="14.0" fill="#e0f7fa" stroke="none" />
+    <text x="1037.2" y="755" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Historian Sync</text>
+    <path d="M 1323.8 884.0 L 1323.8 763 L 1300.4 763 A 5 5 0 0 1 1290.4 763 L 209.33333333333334 763 L 209.33333333333334 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="206.33333333333334,878.0 209.33333333333334,884.0 212.33333333333334,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="721.3266666666667" y="756.0" width="62.08" height="14.0" fill="#e0f7fa" stroke="none" />
+    <text x="752.3666666666667" y="763" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Modbus Poll 1</text>
+    <path d="M 1352.2 884.0 L 1352.2 787 L 1328.8 787 A 5 5 0 0 1 1318.8 787 L 1300.4 787 A 5 5 0 0 1 1290.4 787 L 369.3333333333333 787 L 369.3333333333333 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="366.3333333333333,878.0 369.3333333333333,884.0 372.3333333333333,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="801.3266666666667" y="780.0" width="62.08" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="832.3666666666667" y="787" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Modbus Poll 2</text>
+    <path d="M 1498.0 884.0 L 1498.0 874.0 L 1380.6 874.0 L 1380.6 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1377.6,878.0 1380.6,884.0 1383.6,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1404.1" y="867.0" width="70.4" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="1439.3" y="874.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SCADA Heartbeat</text>
+    <path d="M 713.0 884.0 L 713.0 874.0 L 256.6666666666667 874.0 L 256.6666666666667 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="253.66666666666669,878.0 256.6666666666667,884.0 259.6666666666667,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="613.7933333333333" y="867.0" width="62.08" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="644.8333333333333" y="874.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">HMI Control 1</text>
+    <path d="M 873.0 884.0 L 873.0 866.0 L 529.3333333333334 866.0 L 529.3333333333334 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="526.3333333333334,878.0 529.3333333333334,884.0 532.3333333333334,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="693.7933333333333" y="859.0" width="62.08" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="724.8333333333333" y="866.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">HMI Control 2</text>
+    <path d="M 1818.0 884.0 L 1818.0 795 L 1357.2 795 A 5 5 0 0 1 1347.2 795 L 1328.8 795 A 5 5 0 0 1 1318.8 795 L 1300.4 795 A 5 5 0 0 1 1290.4 795 L 416.6666666666667 795 L 416.6666666666667 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="413.6666666666667,878.0 416.6666666666667,884.0 419.6666666666667,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="868.8333333333334" y="788.0" width="70.4" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="904.0333333333334" y="795" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">PLC Programming</text>
+    <path d="M 576.6666666666666 884.0 L 576.6666666666666 803 L 1290.4 803 A 5 5 0 0 0 1300.4 803 L 1318.8 803 A 5 5 0 0 0 1328.8 803 L 1347.2 803 A 5 5 0 0 0 1357.2 803 L 1813.0 803 A 5 5 0 0 0 1823.0 803 L 2020.3333333333333 803 L 2020.3333333333333 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="2017.3333333333333,878.0 2020.3333333333333,884.0 2023.3333333333333,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="946.7533333333333" y="796.0" width="74.56" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="984.0333333333333" y="803" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Safety Interlock</text>
+    <path d="M 2204.0 884.0 L 2204.0 874.0 L 2067.6666666666665 874.0 L 2067.6666666666665 884.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="2064.6666666666665,878.0 2067.6666666666665,884.0 2070.6666666666665,878.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="2098.553333333333" y="867.0" width="74.56" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="2135.833333333333" y="874.0" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">SIS Console Port</text>
+    <path d="M 233.0 1129.0 L 233.0 1027 L 1333.0 1027 A 5 5 0 0 0 1343.0 1027 L 1615.4 1027 L 1615.4 958.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1612.4,964.0 1615.4,958.0 1618.4,964.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="758.62" y="1020.0" width="53.760000000000005" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="785.5" y="1027" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Temp Upload</text>
+    <path d="M 553.0 1129.0 L 553.0 1035 L 1333.0 1035 A 5 5 0 0 0 1343.0 1035 L 1643.8 1035 L 1643.8 958.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1640.8,964.0 1643.8,958.0 1646.8,964.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="922.78" y="1028.0" width="45.44" height="14.0" fill="#e8eaf6" stroke="none" />
+    <text x="945.5" y="1035" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">CCTV Feed</text>
+    <path d="M 553.0 1363.0 L 553.0 1261 L 1120 1261 A 5 5 0 0 0 1130 1261 L 1135 1261 L 1135 1059 L 1333.0 1059 A 5 5 0 0 0 1343.0 1059 L 1672.2 1059 L 1672.2 958.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1669.2,964.0 1672.2,958.0 1675.2,964.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="799.64" y="1254.0" width="78.72" height="14.0" fill="#e0f2f1" stroke="none" />
+    <text x="839.0" y="1261" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Access Log Upload</text>
+    <path d="M 713.0 1363.0 L 713.0 1269 L 1125 1269 L 1125 1067 L 1130 1067 A 5 5 0 0 0 1140 1067 L 1338.0 1067 L 1338.0 958.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1335.0,964.0 1338.0,958.0 1341.0,964.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="893.72" y="1262.0" width="74.56" height="14.0" fill="#e0f2f1" stroke="none" />
+    <text x="931.0" y="1269" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Fire Alarm Alert</text>
+    <path d="M 1498.0 1363.0 L 1498.0 1293 L 1700.6 1293 L 1700.6 1075 L 1700.6 1075 L 1700.6 958.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1697.6,964.0 1700.6,958.0 1703.6,964.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1564.1" y="1286.0" width="70.4" height="14.0" fill="#f5f5f5" stroke="none" />
+    <text x="1599.3" y="1293" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Power Telemetry</text>
+    <path d="M 1338.0 1363.0 L 1338.0 1301 L 1493.0 1301 A 5 5 0 0 0 1503.0 1301 L 2357 1301 L 2357 547 L 1366.6666666666667 547 A 5 5 0 0 1 1356.6666666666667 547 L 1314.3333333333333 547 L 1314.3333333333333 438.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1311.3333333333333,444.0 1314.3333333333333,438.0 1317.3333333333333,444.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1819.9733333333336" y="540.0" width="78.72" height="14.0" fill="#e0f7fa" stroke="none" />
+    <text x="1859.3333333333335" y="547" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">UPS Battery Alert</text>
+    <path d="M 1658.0 1363.0 L 1658.0 1309 L 2367 1309 L 2367 555 L 2362 555 A 5 5 0 0 1 2352 555 L 1361.6666666666667 555 L 1361.6666666666667 438.0" fill="none" stroke="#1976d2" stroke-width="1.5" />
+    <polygon points="1358.6666666666667,444.0 1361.6666666666667,438.0 1364.6666666666667,444.0" fill="#1976d2" stroke="#1976d2" stroke-width="1" />
+    <rect x="1908.1333333333334" y="548.0" width="70.4" height="14.0" fill="#e0f7fa" stroke="none" />
+    <text x="1943.3333333333335" y="555" fill="#1976d2" font-size="8" font-style="italic" text-anchor="middle" dy="0.35em">Generator Alert</text>
+  </g>
+  <g id="layer-labels" style="transition: opacity 0.2s;">
+    <text x="120" y="63" fill="#eceff1" stroke="#eceff1" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Wide Area Network (WAN)</text>
+    <text x="120" y="63" fill="#37474f" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Wide Area Network (WAN)</text>
+    <text x="120" y="249" fill="#e3f2fd" stroke="#e3f2fd" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Enterprise IT (Zone 4/5)</text>
+    <text x="120" y="249" fill="#0d47a1" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Enterprise IT (Zone 4/5)</text>
+    <text x="120" y="553" fill="#e0f7fa" stroke="#e0f7fa" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Demilitarized Zone (Zone 3.5)</text>
+    <text x="120" y="553" fill="#006064" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Demilitarized Zone (Zone 3.5)</text>
+    <text x="120" y="793" fill="#e8eaf6" stroke="#e8eaf6" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Industrial Control Systems (Zone 3)</text>
+    <text x="120" y="793" fill="#1a237e" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Industrial Control Systems (Zone 3)</text>
+    <text x="120" y="1065" fill="#e0f2f1" stroke="#e0f2f1" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Internet of Things (IoT)</text>
+    <text x="120" y="1065" fill="#004d40" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Internet of Things (IoT)</text>
+    <text x="120" y="1299" fill="#f5f5f5" stroke="#f5f5f5" stroke-width="4" stroke-linejoin="round" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Facility / Safety (Zone 1/2)</text>
+    <text x="120" y="1299" fill="#212121" font-size="13" font-weight="bold" text-anchor="start" dy="0.35em">Facility / Safety (Zone 1/2)</text>
   </g>
 </svg>
   </div>
@@ -228,7 +427,7 @@
     
     function initLayout() {
       const containerRect = container.getBoundingClientRect();
-      const svgWidth = 1200;
+      const svgWidth = 2400;
       const svgHeight = 1697;
       const svgAspect = svgWidth / svgHeight;
       const containerAspect = containerRect.width / containerRect.height;
@@ -292,6 +491,7 @@
     // Layer control toggles
     document.getElementById('chk-zones').addEventListener('change', (e) => {
       document.getElementById('layer-zones').style.opacity = e.target.checked ? '1' : '0.1';
+      document.getElementById('layer-labels').style.opacity = e.target.checked ? '1' : '0.1';
     });
     document.getElementById('chk-vlans').addEventListener('change', (e) => {
       document.getElementById('layer-vlans').style.display = e.target.checked ? 'inline' : 'none';
