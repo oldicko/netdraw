@@ -80,5 +80,10 @@
       "width": 1.5,
       "arrow_size": 6
     }
+  },
+  "pipeline": {
+    "ignore_protocols": ["WUDO", "LLMNR", "mDNS"],
+    "ignore_ports": ["tcp:7680", "udp:5353", "udp:5355"],
+    "cidr_ranges": []
   }
 }

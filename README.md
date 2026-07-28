@@ -1,198 +1,314 @@
-# OT Network Diagram Generator (`netdraw`)
+# OT Network Discovery & Diagram Toolkit
 
-A Python utility that generates rich, circuit-diagram-style network drawings for Operational Technology (OT) environments. By parsing simple asset, flow, and VLAN CSV files, it produces high-resolution static PNGs or interactive, self-contained HTML/SVG diagrams with zoom, pan, and layer/lens control capabilities.
+A set of Python utilities for discovering, cataloguing, and visualising assets and traffic flows on Operational Technology (OT) networks from packet captures.
 
-## Sample Network Diagrams
-
-### Standard View (Dynamic VLAN Subnets & Stacked Quantity Assets)
-![Standard Network Diagram](map.png)
-
-### State Lens Active View (State-Based Asset Color-Coding)
-![State Lens Network Diagram](map_lens.png)
+| Tool | Purpose |
+| :--- | :--- |
+| **`netpipeline.py`** | Analyses pcap files with an optional starting asset list. Discovers assets, maps traffic flows, resolves VLANs, and exports clean CSV files. |
+| **`netdraw.py`** | Generates network diagrams (PNG or interactive HTML) from the CSV files produced by `netpipeline`. |
 
 ---
 
-## Features
-
-- **Standard OT Security Zones**: Stacks zones vertically (e.g., WAN, IT, DMZ, IACS, IoT, Facility) according to the Purdue Model. The canvas dynamically calculates and scales to the minimum required grid of A4 pages based on asset density.
-- **Horizontal VLAN Sorting**: Auto-arranges VLANs side-by-side using a barycenter sweep heuristic to minimize flow line crossovers.
-- **Asset Grid Layout**: Places devices inside their dashed VLAN borders in a clean 2D grid. Packs up to 5 assets horizontally per row.
-- **Dynamic VLAN Labels & Boundaries**: Automatically expands the width of VLAN borders to accommodate descriptive labels incorporating IP CIDR ranges parsed from a VLAN mapping CSV.
-- **System Quantities (Stacked Rectangles)**: Renders assets representing system quantities (using the `Quantity` column) as a stacked three-rectangle container displaying an IP range and quantity label without printing individual MAC addresses.
-- **Generic State Lens**: Allows highlighting assets based on status (e.g., migration state) using customizable color styles configured in `config.json`. Generates an interactive toggled lens and color legend in the HTML diagram, and supports static lens rendering in PNG.
-- **Orthogonal Flow Routing**: Routes connections vertically and horizontally through channels between zones. Automatically selects the shortest route, utilizing bypass corridors and lane spacing to prevent line overlaps.
-- **Bridge Humps**: Automatically detects line crossings and renders semicircular arch "humps" at intersection points (supported in both SVG/HTML and PNG outputs).
-- **Interactive HTML Canvas**: Embeds mouse-drag panning, mouse-wheel zooming, layer toggles, and state lens controls fully offline.
-
----
-
-## Installation
-
-`netdraw` requires **Python 3.x** and uses standard library modules.
-
-### Requirements
-
-To generate static **PNG** files, install the Pillow library:
+## Quick Start
 
 ```bash
-pip install Pillow
-```
+# 1. Run the pipeline against a pcap (with optional asset list)
+python3 netpipeline.py -p capture.pcapng
 
-*Note: Generating **HTML** diagrams has zero external dependencies.*
+# 2. (Optional) Generate a diagram from the results
+python3 netdraw.py -a discovered_assets.csv -f discovered_flows.csv -v vlans.csv -o map.html
+```
 
 ---
 
 ## Offline Security & Privacy
 
-This utility is designed with **zero network dependency** and **strict privacy** in mind. It is safe for use on air-gapped systems or secure environments:
+Both utilities are designed with **zero network dependency** and **strict privacy** in mind. They are safe for use on air-gapped systems or secure OT environments:
 
-- **100% Local Execution**: The script operates entirely on your local machine. It does not initiate any internet connections or transmit data to external services.
-- **Zero External CDNs/APIs**: The generated interactive HTML file is completely self-contained. It embeds standard SVG elements and system font styling with no remote libraries, tracker scripts, or external dependencies.
-
----
-
-## Usage
-
-Run `netdraw.py` by passing paths to your assets CSV, flows CSV, VLANs CSV (optional), and config JSON.
-
-### Generate Interactive HTML (with Pan-Zoom & State Lens)
-
-```bash
-./netdraw.py -a sample_assets.csv -f sample_flows.csv -c config.json -v sample_vlans.csv -o map.html
-```
-
-### Generate High-Resolution PNG (with State Lens applied statically)
-
-```bash
-./netdraw.py -a sample_assets.csv -f sample_flows.csv -c config.json -v sample_vlans.csv --lens -o map.png
-```
-
-### CLI Arguments
-
-- `-a`, `--assets`: Path to the assets CSV file (Required).
-- `-f`, `--flows`: Path to the flows CSV file (Required).
-- `-c`, `--config`: Path to the configuration JSON file (Default: `config.json`).
-- `-v`, `--vlans`: Path to the VLANs CSV file containing CIDR mappings (Optional).
-- `--lens`: Enable the configured generic state lens by default in HTML, or render it statically in PNG.
-- `-o`, `--output`: Path to the output file (Generates `.html` or `.png` based on the extension).
+- **100% Local Execution**: Scripts operate entirely on your local machine. No internet connections are initiated and no data is transmitted externally.
+- **Zero External Dependencies**: Generated HTML diagrams are fully self-contained with no remote libraries, CDNs, or tracker scripts.
 
 ---
 
-## CSV File Formats
+## `netpipeline.py` — Network Discovery Pipeline
 
-### 1. Assets CSV File (`assets.csv`)
+### What It Does
 
-Defines all network nodes, their IPs, MAC addresses, VLANs, security zones, quantities, and states.
+`netpipeline` takes a **packet capture** (and an optional **starting list of known assets**), then:
 
-| Header | Description | Example |
-| :--- | :--- | :--- |
-| **Hostname** | Name of the asset | `PLC-1` |
-| **IP address** | IP address(es) (Semicolon `;` separated, or range for quantities) | `192.168.1.10;192.168.1.11` |
-| **MAC address** | MAC Address of the asset (Omit/leave blank for quantities) | `00:50:56:a1:b2:c3` |
-| **Comment** | Optional description or device details | `Siemens S7-1500 PLC` |
-| **VLAN ID** | The VLAN number or ID containing the asset | `200` |
-| **Zone** | Security Zone matching config's `zone_order` | `IACS` |
-| **Quantity** | Optional quantity representing a system group | `3` |
-| **State** | Optional state designation for lens styling (e.g. Migration State) | `To-be-migrated` |
+1. **Parses traffic** using `tshark` to extract flows, hostnames, MACs, and VLAN tags
+2. **Discovers new assets** by following traffic connections transitively from your starting assets
+3. **Resolves details** — fills in missing MAC addresses, hostnames, and VLAN IDs
+4. **Detects DHCP changes** — updates IP addresses when a known MAC appears with a new IP
+5. **Filters noise** — ignores protocols and ports configured in `config.json`
+6. **Classifies WAN traffic** — IPs not in RFC-1918, `vlans.csv`, or `config.json` CIDR ranges are treated as WAN
+7. **Exports clean CSVs** — assets, flows, external WAN log, and updates `vlans.csv` with new subnets
 
-#### Sample Assets File:
-```csv
-Hostname,IP address,MAC address,Comment,VLAN ID,Zone,Quantity,State
-IT-Server-1,10.10.1.10,00:11:22:33:44:55,Primary Domain Controller,10,IT,,Dev
-DMZ-Web,172.16.1.10,00:aa:bb:cc:dd:01,External Web Server,100,DMZ,,To-be-migrated
-PLC-Group-1,192.168.1.10-192.168.1.14,,System Quantity Group,200,IACS,5,Aries
+### Prerequisites
+
+- **Python 3.6+** (standard library only, no pip dependencies)
+- **tshark** (part of [Wireshark](https://www.wireshark.org/download.html)) must be installed and available in PATH
+
+### Team Workflow
+
+The recommended workflow for a team sharing a common client engagement:
+
+```
+shared config/           Your pcap captures
+┌──────────────────┐     ┌──────────────────┐
+│ config.json      │     │ capture_01.pcapng │
+│ vlans.csv        │     │ capture_02.pcapng │
+│ protocols.csv    │     │ ...               │
+│ assets.csv       │     └──────────────────┘
+└──────────────────┘              │
+         │                        │
+         └────────┬───────────────┘
+                  ▼
+        python3 netpipeline.py \
+          -i assets.csv \
+          -p capture_01.pcapng
+                  │
+                  ▼
+        ┌──────────────────────┐
+        │ discovered_assets.csv│  ← Enriched asset list
+        │ discovered_flows.csv │  ← Traffic flows
+        │ external.csv         │  ← WAN connection log
+        │ vlans.csv (updated)  │  ← New subnets appended
+        └──────────────────────┘
 ```
 
-### 2. Flows CSV File (`flows.csv`)
+**Shared files** (commit to your repo):
+- `assets.csv` — Starting list of known OT assets
+- `vlans.csv` — Authoritative VLAN/subnet configuration
+- `config.json` — Pipeline settings (ignore rules, CIDR ranges)
+- `protocols.csv` — Protocol name lookup table
 
-Defines connections. Endpoint values can be specific **IP addresses** (matching individual or quantity-group IP ranges) or **VLAN IDs**.
+**Per-run outputs** (one per pcap):
+- `discovered_assets.csv` — All assets with resolved details
+- `discovered_flows.csv` — Filtered traffic flows
+- `external.csv` — External/WAN connection log
 
-| Header | Description | Example |
-| :--- | :--- | :--- |
-| **IP address source** | Flow source endpoint (Asset IP, VLAN ID, or `WAN`) | `192.168.1.10` or `200` or `WAN` |
-| **IP address destination** | Flow destination endpoint (Asset IP, VLAN ID, or `WAN`) | `10.10.1.10` or `100` or `WAN` |
-| **Comment** | Optional label shown centered on the flow line | `Modbus TCP` |
+To process multiple pcaps incrementally, use `--append`:
 
-### 3. VLANs CSV File (`vlans.csv`)
-
-Defines VLAN IDs and their associated subnets in CIDR notation.
-
-| Header | Description | Example |
-| :--- | :--- | :--- |
-| **VLAN ID** | The VLAN number or ID (Unique Key) | `200` |
-| **IP Range** | Subnet range in CIDR notation | `192.168.1.0/24` |
-
-#### Sample VLANs File:
-```csv
-VLAN ID,IP Range
-10,10.10.1.0/24
-100,172.16.1.0/24
-200,192.168.1.0/24
+```bash
+python3 netpipeline.py -i assets.csv -p capture_01.pcapng
+python3 netpipeline.py -i assets.csv -p capture_02.pcapng --append
 ```
+
+### CLI Reference
+
+```
+usage: netpipeline.py [-h] -i INPUT_ASSETS -p PCAP [-v VLANS] [-c CONFIG]
+                      [-a OUTPUT_ASSETS] [-f OUTPUT_FLOWS] [-e EXTERNAL]
+                      [--append] [--protocols PROTOCOLS]
+```
+
+| Flag | Default | Description |
+| :--- | :--- | :--- |
+| `-i`, `--input-assets` | *(optional)* | Starting asset list CSV (if omitted, all discovered internal assets are in-scope) |
+| `-p`, `--pcap` | *(required)* | Packet capture file (`.pcapng`, `.pcap`, or `.pcapng.gz`) |
+| `-v`, `--vlans` | `vlans.csv` | VLAN/subnet configuration CSV |
+| `-c`, `--config` | `config.json` | Pipeline configuration JSON |
+| `-a`, `--output-assets` | `discovered_assets.csv` | Output asset list |
+| `-f`, `--output-flows` | `discovered_flows.csv` | Output flow list |
+| `-e`, `--external` | `external.csv` | Output external WAN connection log |
+| `--append` | off | Merge results into existing output files (prompts on conflicts) |
+| `--protocols` | `protocols.csv` | Protocol name lookup CSV |
+| `--high-port-min` | `49152` | Minimum port threshold for high-port range grouping |
+| `--high-port-threshold` | `50` | Minimum count of high ports to trigger range grouping |
+| `--high-port-gap` | `1000` | Maximum port gap between high ports to merge into a single range |
+
+### How Discovery Works
+
+1. **Starting assets** (optional): If provided, loaded from your input CSV. IPs in ranges (`10.0.0.1-10.0.0.5`) and multi-homed assets (`192.168.1.10;172.16.1.99`) are parsed automatically.
+2. **Asset Scope & Discovery**:
+   - **With starting assets**: Transitive discovery follows internal traffic connections from starting assets to discover connected devices.
+   - **Without starting assets**: All internal (non-WAN) devices observed in packet traffic are automatically treated as in-scope assets.
+3. **High-Port Range Grouping**: When more than 50 high-level ports (ports >= 49152) are detected between an endpoint pair and protocol, individual port entries are aggregated into a single consolidated range entry (e.g. `UDP49152-65535`) to reduce noise.
+4. **WAN classification**: Any IP not in RFC-1918, not in `vlans.csv`, and not in a `config.json` CIDR range is classified as WAN. WAN IPs are **not** added to discovered assets — their flows appear as `WAN` in the flows CSV and details are logged to `external.csv`.
+5. **VLAN resolution**: Each asset is assigned a VLAN ID by matching its IP against subnets in `vlans.csv`. New subnets not yet in `vlans.csv` are automatically appended with a placeholder letter ID (e.g. `A`, `B`, `C`) so you can fill in the real VLAN ID later.
+
+---
+
+## File Formats
+
+### Input: Assets CSV (`assets.csv`)
+
+Your starting list of known OT/IT assets.
+
+| Column | Required | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **Hostname** | Yes | Device name | `PLC-1` |
+| **IP address** | Yes | IP address(es). Semicolon-separated for multi-homed, or range for groups | `192.168.1.10` or `10.0.0.1-10.0.0.5` |
+| **MAC address** | No | MAC address (resolved automatically if blank) | `00:50:56:a1:b2:c3` |
+| **Comment** | No | Description or device type | `Siemens S7-1500` |
+| **VLAN ID** | No | VLAN number (resolved automatically from `vlans.csv` if blank) | `200` |
+| **Quantity** | No | Number of devices in a group (used with IP ranges) | `5` |
+| **State** | No | Custom state label for diagram lens styling | `to be migrated` |
+
+```csv
+Hostname,IP address,MAC address,Comment,VLAN ID,Quantity,State
+PLC-1,192.168.1.10,00:50:56:a1:b2:c3,Siemens S7-1500,,,
+HMI-Group,192.168.1.50-192.168.1.54,,PanelView HMIs,,5,
+SCADA-Server,192.168.2.10;172.16.1.99,00:50:56:a1:b2:c6,Dual-homed SCADA,,,
+```
+
+### Input: VLANs CSV (`vlans.csv`)
+
+Authoritative VLAN/subnet configuration. `netpipeline` reads this to classify IPs into VLANs and appends newly discovered subnets automatically.
+
+| Column | Required | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **VLAN ID** | Yes | VLAN number or identifier | `200` |
+| **IP Range** | Yes | Subnet in CIDR notation | `192.168.1.0/24` |
+| **Description** | No | Human-readable name (used in diagram labels) | `Manufacturing` |
+| **Zone** | No | Security zone (used by `netdraw` for diagram layout) | `OT` |
+
+```csv
+VLAN ID,IP Range,Description,Zone
+200,192.168.1.0/24,Manufacturing,OT
+210,192.168.2.0/24,SCADA,OT
+100,172.16.1.0/24,DMZ,DMZ
+10,10.10.1.0/24,Servers,IT
+```
+
+### Input: Protocols CSV (`protocols.csv`)
+
+Lookup table for mapping port numbers to human-readable protocol names.
+
+| Column | Required | Description | Example |
+| :--- | :--- | :--- | :--- |
+| **Protocol** | Yes | `tcp` or `udp` | `tcp` |
+| **Port** | Yes | Port number | `502` |
+| **Name** | Yes | Protocol name | `Modbus` |
+
+```csv
+Protocol,Port,Name
+tcp,502,Modbus
+tcp,44818,EtherNet-IP
+tcp,443,HTTPS
+udp,53,DNS
+```
+
+### Output: Discovered Assets (`discovered_assets.csv`)
+
+Enriched asset list with resolved MACs, hostnames, and VLAN IDs. Includes all starting assets plus any transitively discovered assets.
+
+| Column | Description |
+| :--- | :--- |
+| **Hostname** | Original or passively resolved hostname |
+| **IP address** | IP address (updated if DHCP change detected) |
+| **MAC address** | Original or passively resolved MAC |
+| **Comment** | Original comment, or `Passively Discovered OT-Related Asset` for new assets |
+| **VLAN ID** | Resolved VLAN ID from `vlans.csv` |
+| **Quantity** | Preserved from input |
+| **State** | Preserved from input |
+
+### Output: Discovered Flows (`discovered_flows.csv`)
+
+All traffic flows between discovered assets, filtered by ignore rules.
+
+| Column | Description | Example |
+| :--- | :--- | :--- |
+| **IP address source** | Source IP or `WAN` | `192.168.1.10` |
+| **IP address destination** | Destination IP or `WAN` | `10.10.1.10` |
+| **Comment** | Protocol or port range label | `TCP502 - Modbus` or `UDP49152-65535` |
+| **Count** | Total packet count matching this flow | `1542` |
+
+### Output: External WAN Log (`external.csv`)
+
+Detailed log of all connections involving external (WAN) IP addresses.
+
+| Column | Description | Example |
+| :--- | :--- | :--- |
+| **External IP** | The WAN IP address | `8.8.8.8` |
+| **Hostname** | Resolved hostname (if observed via DNS) | `dns.google` |
+| **Protocol** | TCP or UDP | `UDP` |
+| **Port** | Port number | `53` |
+| **Internal IP** | The internal asset IP | `10.10.1.50` |
+| **Direction** | `inbound` or `outbound` | `outbound` |
 
 ---
 
 ## Configuration (`config.json`)
 
-Configure layout dimensions, defaults, color states/lens settings, and line styles.
+### Pipeline Settings
+
+The `pipeline` section of `config.json` controls `netpipeline` behaviour:
 
 ```json
 {
-  "theme": "light",
-  "output_format": "html",
-  "dimensions": {
-    "width": 1200,
-    "height": 1697
-  },
-  "lens_column": "State",
-  "states": {
-    "To-be-migrated": {
-      "fill": "#ffebee",
-      "stroke": "#d32f2f",
-      "text_color": "#c62828"
-    },
-    "Dev": {
-      "fill": "#e8f5e9",
-      "stroke": "#2e7d32",
-      "text_color": "#1b5e20"
-    },
-    "Aries": {
-      "fill": "#e3f2fd",
-      "stroke": "#1565c0",
-      "text_color": "#0d47a1"
-    }
-  },
-  "zone_order": ["WAN", "IT", "DMZ", "IACS", "IOT", "Facility"],
-  "zones": {
-    "WAN": {
-      "fill": "#eceff1",
-      "stroke": "#b0bec5",
-      "text_color": "#37474f",
-      "label": "Wide Area Network (WAN)"
-    }
-  },
-  "styles": {
-    "vlan_border": {
-      "stroke": "#42a5f5",
-      "width": 2,
-      "dasharray": "6,4"
-    },
-    "asset": {
-      "fill": "#ffffff",
-      "stroke": "#90caf9",
-      "text_color": "#1565c0",
-      "ip_color": "#0d47a1",
-      "mac_color": "#546e7a"
-    }
+  "pipeline": {
+    "ignore_protocols": ["WUDO", "LLMNR", "mDNS"],
+    "ignore_ports": ["tcp:7680", "udp:5353", "udp:5355"],
+    "cidr_ranges": ["1.2.0.0/16"]
   }
 }
 ```
 
+| Key | Description |
+| :--- | :--- |
+| `ignore_protocols` | Protocol names (from `protocols.csv`) to exclude from flows |
+| `ignore_ports` | Specific `protocol:port` pairs to exclude |
+| `cidr_ranges` | Additional CIDR ranges to treat as internal (non-WAN). Use this for non-RFC-1918 address space that is local to your network. |
+
+### Diagram Settings
+
+The remaining sections of `config.json` control `netdraw` diagram rendering:
+
+| Key | Description |
+| :--- | :--- |
+| `theme` | `light` or `dark` |
+| `dimensions` | Page dimensions `{ "width": 1200, "height": 1697 }` |
+| `zone_order` | Ordered list of security zones top-to-bottom |
+| `zones` | Per-zone colours and labels |
+| `states` | Per-state colours for lens styling |
+| `styles` | Asset, flow, and VLAN border styling |
+
 ---
 
-## Validation & Warnings
+## `netdraw.py` — Network Diagram Generator
 
-The generator performs strict validation:
-- **Subnet Mismatch Warns**: If an asset's IP is outside its declared VLAN CIDR range, `netdraw` prints a warning message and proceeds to draw the diagram.
-- **Zone Exclusivity**: If a VLAN ID is declared in multiple zones across assets, `netdraw` aborts to prevent layout ambiguity.
-- **Reference Integrity**: If a flow endpoint references an IP or VLAN not declared in assets, an error is generated detailing the row and missing value.
+Generates rich, circuit-diagram-style network drawings from the CSV files produced by `netpipeline` (or hand-authored CSVs).
+
+### Features
+
+- **Standard OT Security Zones**: Vertical zones (WAN, IT, DMZ, IACS, IoT, Facility) following the Purdue Model
+- **Horizontal VLAN Sorting**: Barycenter sweep to minimise flow line crossovers
+- **Asset Grid Layout**: Clean 2D grid inside dashed VLAN borders
+- **Dynamic VLAN Labels**: Auto-expands to fit `"VLAN {ID}: {Description}"` labels from `vlans.csv`
+- **System Quantities**: Stacked rectangles for asset groups with quantity labels
+- **State Lens**: Colour-coded asset highlighting based on custom states
+- **Orthogonal Flow Routing**: Vertical/horizontal routing with bridge humps at crossings
+- **Interactive HTML**: Pan, zoom, layer toggles, and lens controls — fully offline
+
+### Usage
+
+```bash
+# Interactive HTML diagram
+python3 netdraw.py -a discovered_assets.csv -f discovered_flows.csv -v vlans.csv -o map.html
+
+# Static PNG (requires Pillow: pip install Pillow)
+python3 netdraw.py -a discovered_assets.csv -f discovered_flows.csv -v vlans.csv -o map.png
+
+# PNG with state lens applied
+python3 netdraw.py -a discovered_assets.csv -f discovered_flows.csv -v vlans.csv --lens -o map.png
+```
+
+| Flag | Default | Description |
+| :--- | :--- | :--- |
+| `-a`, `--assets` | *(required)* | Assets CSV file |
+| `-f`, `--flows` | *(required)* | Flows CSV file |
+| `-v`, `--vlans` | — | VLANs CSV file |
+| `-c`, `--config` | `config.json` | Configuration JSON |
+| `--lens` | off | Enable state lens (static in PNG, toggle in HTML) |
+| `-o`, `--output` | — | Output file (`.html` or `.png`) |
+
+### Sample Diagrams
+
+#### Standard View
+![Standard Network Diagram](map.png)
+
+#### State Lens View
+![State Lens Network Diagram](map_lens.png)
+
