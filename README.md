@@ -12,8 +12,8 @@ A set of Python utilities for discovering, cataloguing, and visualising assets a
 ## Quick Start
 
 ```bash
-# 1. Run the pipeline against a pcap (with optional asset list)
-python3 netpipeline.py -p capture.pcapng
+# 1. Run the pipeline against one or more pcaps (with optional asset list)
+python3 netpipeline.py -p capture_01.pcapng capture_02.pcapng
 
 # 2. (Optional) Generate a diagram from the results
 python3 netdraw.py -a discovered_assets.csv -f discovered_flows.csv -v vlans.csv -o map.html
@@ -34,20 +34,22 @@ Both utilities are designed with **zero network dependency** and **strict privac
 
 ### What It Does
 
-`netpipeline` takes a **packet capture** (and an optional **starting list of known assets**), then:
+`netpipeline` takes **one or more packet captures** (and an optional **starting list of known assets**), then:
 
-1. **Parses traffic** using `tshark` to extract flows, hostnames, MACs, and VLAN tags
-2. **Discovers new assets** by following traffic connections transitively from your starting assets
-3. **Resolves details** — fills in missing MAC addresses, hostnames, and VLAN IDs
-4. **Detects DHCP changes** — updates IP addresses when a known MAC appears with a new IP
-5. **Filters noise** — ignores protocols and ports configured in `config.json`
-6. **Classifies WAN traffic** — IPs not in RFC-1918, `vlans.csv`, or `config.json` CIDR ranges are treated as WAN
-7. **Exports clean CSVs** — assets, flows, external WAN log, and updates `vlans.csv` with new subnets
+1. **Pre-validates PCAPs** using local Wireshark utilities (`capinfos`) to filter corrupt files upfront
+2. **Parses traffic** using `tshark` with robust packet-by-packet error handling
+3. **Displays real-time ETA progress** with throughput (pkts/sec) and completion estimates
+4. **Discovers new assets** by following traffic connections transitively from your starting assets
+5. **Resolves details** — fills in missing MAC addresses, hostnames, and VLAN IDs
+6. **Detects DHCP changes** — updates IP addresses when a known MAC appears with a new IP
+7. **Filters noise & groups high-ports** — ignores protocols and ports configured in `config.json`
+8. **Classifies WAN traffic** — IPs not in RFC-1918, `vlans.csv`, or `config.json` CIDR ranges are treated as WAN
+9. **Exports clean CSVs & Reports Summary** — exports asset, flow, and WAN log CSVs, appends new subnets to `vlans.csv`, and presents a run summary including earliest and latest packet timestamps
 
 ### Prerequisites
 
 - **Python 3.6+** (standard library only, no pip dependencies)
-- **tshark** (part of [Wireshark](https://www.wireshark.org/download.html)) must be installed and available in PATH
+- **tshark** and **capinfos** (part of [Wireshark](https://www.wireshark.org/download.html)) must be installed and available in PATH
 
 ### Team Workflow
 
@@ -66,7 +68,7 @@ shared config/           Your pcap captures
                   ▼
         python3 netpipeline.py \
           -i assets.csv \
-          -p capture_01.pcapng
+          -p capture_01.pcapng capture_02.pcapng
                   │
                   ▼
         ┌──────────────────────┐
@@ -83,30 +85,29 @@ shared config/           Your pcap captures
 - `config.json` — Pipeline settings (ignore rules, CIDR ranges)
 - `protocols.csv` — Protocol name lookup table
 
-**Per-run outputs** (one per pcap):
+**Per-run outputs**:
 - `discovered_assets.csv` — All assets with resolved details
 - `discovered_flows.csv` — Filtered traffic flows
 - `external.csv` — External/WAN connection log
 
-To process multiple pcaps incrementally, use `--append`:
+To process multiple pcaps together or using wildcards:
 
 ```bash
-python3 netpipeline.py -i assets.csv -p capture_01.pcapng
-python3 netpipeline.py -i assets.csv -p capture_02.pcapng --append
+python3 netpipeline.py -i assets.csv -p *.pcapng
 ```
 
 ### CLI Reference
 
 ```
-usage: netpipeline.py [-h] -i INPUT_ASSETS -p PCAP [-v VLANS] [-c CONFIG]
-                      [-a OUTPUT_ASSETS] [-f OUTPUT_FLOWS] [-e EXTERNAL]
-                      [--append] [--protocols PROTOCOLS]
+usage: netpipeline.py [-h] [-i INPUT_ASSETS] -p PCAP [PCAP ...] [-v VLANS]
+                      [-c CONFIG] [-a OUTPUT_ASSETS] [-f OUTPUT_FLOWS]
+                      [-e EXTERNAL] [--append] [--protocols PROTOCOLS]
 ```
 
 | Flag | Default | Description |
 | :--- | :--- | :--- |
 | `-i`, `--input-assets` | *(optional)* | Starting asset list CSV (if omitted, all discovered internal assets are in-scope) |
-| `-p`, `--pcap` | *(required)* | Packet capture file (`.pcapng`, `.pcap`, or `.pcapng.gz`) |
+| `-p`, `--pcap`, `--pcaps` | *(required)* | One or more packet capture files (`.pcapng`, `.pcap`, `.pcapng.gz`) or glob patterns |
 | `-v`, `--vlans` | `vlans.csv` | VLAN/subnet configuration CSV |
 | `-c`, `--config` | `config.json` | Pipeline configuration JSON |
 | `-a`, `--output-assets` | `discovered_assets.csv` | Output asset list |
@@ -117,6 +118,7 @@ usage: netpipeline.py [-h] -i INPUT_ASSETS -p PCAP [-v VLANS] [-c CONFIG]
 | `--high-port-min` | `49152` | Minimum port threshold for high-port range grouping |
 | `--high-port-threshold` | `50` | Minimum count of high ports to trigger range grouping |
 | `--high-port-gap` | `1000` | Maximum port gap between high ports to merge into a single range |
+
 
 ### How Discovery Works
 

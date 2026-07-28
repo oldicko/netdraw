@@ -1,12 +1,81 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import datetime
+import glob
 import ipaddress
 import json
 import os
+import shutil
 import subprocess
 import sys
+import time
 from collections import defaultdict
+
+def format_seconds(seconds):
+    if seconds is None or seconds < 0:
+        return "--:--"
+    seconds = int(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    if hours > 0:
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    return f"{minutes:02d}:{secs:02d}"
+
+def validate_and_inspect_pcaps(pcap_paths):
+    """
+    Validates a list of PCAP files using capinfos (if available).
+    Returns (valid_pcaps, corrupt_pcaps, total_expected_packets).
+    """
+    valid_pcaps = []
+    corrupt_pcaps = []
+    total_expected_packets = 0
+    has_capinfos = shutil.which("capinfos") is not None
+
+    for pcap_path in pcap_paths:
+        if not os.path.exists(pcap_path):
+            print(f"netpipeline: Warning - PCAP file not found: '{pcap_path}'", file=sys.stderr)
+            corrupt_pcaps.append((pcap_path, "File not found"))
+            continue
+
+        if not has_capinfos:
+            valid_pcaps.append(pcap_path)
+            continue
+
+        try:
+            cmd = ["capinfos", "-T", "-m", "-c", "-a", "-e", pcap_path]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res.returncode != 0:
+                err_msg = res.stderr.strip() or "capinfos returned error status"
+                print(f"netpipeline: Warning - PCAP file '{pcap_path}' is corrupt or invalid format: {err_msg}", file=sys.stderr)
+                corrupt_pcaps.append((pcap_path, err_msg))
+                continue
+
+            lines = [line.strip() for line in res.stdout.strip().splitlines() if line.strip()]
+            if len(lines) < 2:
+                print(f"netpipeline: Warning - PCAP file '{pcap_path}' produced unparseable capinfos output.", file=sys.stderr)
+                corrupt_pcaps.append((pcap_path, "Unparseable capinfos output"))
+                continue
+
+            reader = csv.DictReader(lines)
+            row = next(reader, None)
+            if not row:
+                corrupt_pcaps.append((pcap_path, "Empty summary"))
+                continue
+
+            pkt_count_str = row.get("Number of packets", "0").replace(",", "").strip()
+            pkt_count = int(pkt_count_str) if pkt_count_str.isdigit() else 0
+
+            valid_pcaps.append(pcap_path)
+            total_expected_packets += pkt_count
+
+        except Exception as e:
+            print(f"netpipeline: Warning - Error validating '{pcap_path}': {e}", file=sys.stderr)
+            corrupt_pcaps.append((pcap_path, str(e)))
+
+    return valid_pcaps, corrupt_pcaps, total_expected_packets
+
 
 def ip_to_int(ip):
     try:
@@ -274,7 +343,7 @@ def resolve_vlan_id(ip, subnet_to_vlan):
 def main():
     parser = argparse.ArgumentParser(description="OT/IT Network Pipeline Utility.")
     parser.add_argument("-i", "--input-assets", required=False, default=None, help="Path to input assets CSV file (starting list of OT assets, optional)")
-    parser.add_argument("-p", "--pcap", required=True, help="Path to pcapng or gzipped pcapng file")
+    parser.add_argument("-p", "--pcap", "--pcaps", nargs="+", required=True, help="Path to one or more pcapng or pcap files (supports glob patterns)")
     parser.add_argument("-v", "--vlans", default="vlans.csv", help="Path to VLANs CSV file (defaults to vlans.csv)")
     parser.add_argument("-c", "--config", default="config.json", help="Path to config.json file")
     parser.add_argument("-a", "--output-assets", default="discovered_assets.csv", help="Path to output assets CSV file")
@@ -292,8 +361,20 @@ def main():
     if args.input_assets and not os.path.exists(args.input_assets):
         print(f"Error: Input assets file not found: {args.input_assets}", file=sys.stderr)
         sys.exit(1)
-    if not os.path.exists(args.pcap):
-        print(f"Error: PCAP file not found: {args.pcap}", file=sys.stderr)
+
+    # Collect and expand PCAP inputs (support multiple files and wildcards)
+    pcap_inputs = args.pcap if isinstance(args.pcap, list) else [args.pcap]
+    expanded_pcaps = []
+    for item in pcap_inputs:
+        matched = glob.glob(item)
+        if matched:
+            expanded_pcaps.extend(sorted(matched))
+        else:
+            expanded_pcaps.append(item)
+
+    pcap_list = list(dict.fromkeys(expanded_pcaps))
+    if not pcap_list:
+        print("Error: No PCAP files provided or found.", file=sys.stderr)
         sys.exit(1)
 
     # Verify tshark installation
@@ -303,6 +384,20 @@ def main():
         print("Error: 'tshark' is not installed or not available in PATH.", file=sys.stderr)
         print("       Install Wireshark/tshark: https://www.wireshark.org/download.html", file=sys.stderr)
         sys.exit(1)
+
+    print("netpipeline: Validating PCAP file(s) with Wireshark utilities...")
+    valid_pcaps, corrupt_pcaps, total_expected_packets = validate_and_inspect_pcaps(pcap_list)
+
+    if not valid_pcaps:
+        print("Error: No valid PCAP files to process.", file=sys.stderr)
+        sys.exit(1)
+
+    if total_expected_packets > 0:
+        print(f"netpipeline: Verified {len(valid_pcaps)} valid PCAP file(s). Estimated total packets: {total_expected_packets:,}")
+    else:
+        print(f"netpipeline: Verified {len(valid_pcaps)} valid PCAP file(s).")
+    if corrupt_pcaps:
+        print(f"netpipeline: Skipped {len(corrupt_pcaps)} corrupt/unreadable PCAP file(s).")
 
     print("netpipeline: Loading configuration...")
     vlan_networks = load_vlans(args.vlans)
@@ -378,33 +473,6 @@ def main():
     tcp_conn_info = {}
     udp_flow_pkt_counts = defaultdict(int)
 
-    # Build tshark command
-    tshark_cmd = [
-        "tshark", "-r", args.pcap,
-        "-T", "fields",
-        "-e", "ip.src", "-e", "eth.src",
-        "-e", "ip.dst", "-e", "eth.dst",
-        "-e", "ip.ttl",
-        "-e", "arp.src.proto_ipv4", "-e", "arp.src.hw_mac",
-        "-e", "dns.resp.name", "-e", "dns.a",
-        "-e", "dhcp.option.hostname",
-        "-e", "bootp.option.hostname",
-        "-e", "bootp.ip.your",
-        "-e", "nbns.name",
-        "-e", "tls.handshake.extensions_server_name", "-e", "http.host",
-        "-e", "tcp.dstport", "-e", "udp.dstport",
-        "-e", "tcp.srcport", "-e", "udp.srcport",
-        "-e", "tcp.flags",
-        "-e", "vlan.id",
-        "-E", "separator=;"
-    ]
-
-    try:
-        proc = subprocess.Popen(tshark_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
-    except Exception as e:
-        print(f"Error starting tshark: {e}", file=sys.stderr)
-        sys.exit(1)
-
     def get_first(val):
         val = val.strip()
         if not val:
@@ -412,132 +480,205 @@ def main():
         return val.split(',')[0].strip()
 
     packet_count = 0
-    print(f"netpipeline: Running tshark on '{args.pcap}'...")
-    
-    for line in proc.stdout:
-        line = line.strip()
-        if not line:
+    corrupt_packet_count = 0
+    min_packet_epoch = None
+    max_packet_epoch = None
+    start_time = time.time()
+    last_progress_update = 0
+
+    print("netpipeline: Starting passive traffic analysis...")
+
+    for file_idx, pcap_path in enumerate(valid_pcaps, 1):
+        tshark_cmd = [
+            "tshark", "-r", pcap_path,
+            "-T", "fields",
+            "-e", "frame.time_epoch",
+            "-e", "ip.src", "-e", "eth.src",
+            "-e", "ip.dst", "-e", "eth.dst",
+            "-e", "ip.ttl",
+            "-e", "arp.src.proto_ipv4", "-e", "arp.src.hw_mac",
+            "-e", "dns.resp.name", "-e", "dns.a",
+            "-e", "dhcp.option.hostname",
+            "-e", "bootp.option.hostname",
+            "-e", "bootp.ip.your",
+            "-e", "nbns.name",
+            "-e", "tls.handshake.extensions_server_name", "-e", "http.host",
+            "-e", "tcp.dstport", "-e", "udp.dstport",
+            "-e", "tcp.srcport", "-e", "udp.srcport",
+            "-e", "tcp.flags",
+            "-e", "vlan.id",
+            "-E", "separator=;"
+        ]
+
+        try:
+            proc = subprocess.Popen(tshark_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+        except Exception as e:
+            print(f"netpipeline: Error starting tshark on '{pcap_path}': {e}", file=sys.stderr)
             continue
-        
-        parts = line.split(';')
-        if len(parts) < 20:
-            continue
-            
-        packet_count += 1
-        if packet_count % 10000 == 0:
-            print(f"  Processed {packet_count} packets...", flush=True)
 
-        ip_src = get_first(parts[0])
-        eth_src = get_first(parts[1])
-        ip_dst = get_first(parts[2])
-        eth_dst = get_first(parts[3])
-        ip_ttl = get_first(parts[4])
-        arp_ip = get_first(parts[5])
-        arp_mac = get_first(parts[6])
-        dns_name = get_first(parts[7])
-        dns_ip = get_first(parts[8])
-        dhcp_host = get_first(parts[9])
-        bootp_host = get_first(parts[10])
-        bootp_your_ip = get_first(parts[11])
-        nbns_name = get_first(parts[12])
-        tls_sni = get_first(parts[13])
-        http_host = get_first(parts[14])
-        tcp_dstport = get_first(parts[15])
-        udp_dstport = get_first(parts[16])
-        tcp_srcport = get_first(parts[17])
-        udp_srcport = get_first(parts[18])
-        tcp_flags = get_first(parts[19]) if len(parts) > 19 else ""
-        vlan_id_pkt = get_first(parts[20]) if len(parts) > 20 else ""
+        for line in proc.stdout:
+            try:
+                line = line.strip()
+                if not line:
+                    continue
 
-        # Passive Hostname / MAC tracking
-        if dns_name and dns_ip:
-            ip_hostnames[dns_ip].append(clean_hostname(dns_name))
-        if dhcp_host and bootp_your_ip:
-            ip_hostnames[bootp_your_ip].append(clean_hostname(dhcp_host))
-        elif bootp_host and bootp_your_ip:
-            ip_hostnames[bootp_your_ip].append(clean_hostname(bootp_host))
-        if tls_sni and ip_dst:
-            ip_hostnames[ip_dst].append(clean_hostname(tls_sni))
-        elif http_host and ip_dst:
-            ip_hostnames[ip_dst].append(clean_hostname(http_host))
-        if nbns_name and ip_src:
-            ip_hostnames[ip_src].append(clean_hostname(nbns_name))
-            
-        if arp_ip and arp_mac:
-            arp_ip_macs[arp_ip].add(arp_mac)
+                parts = line.split(';')
+                if len(parts) < 21:
+                    corrupt_packet_count += 1
+                    continue
 
-        if vlan_id_pkt:
-            if ip_src and eth_src:
-                ip_mac_vlans[(ip_src, eth_src)].append(vlan_id_pkt)
-            if ip_dst and eth_dst:
-                ip_mac_vlans[(ip_dst, eth_dst)].append(vlan_id_pkt)
+                pkt_time_str = parts[0].strip()
+                if pkt_time_str:
+                    try:
+                        ts = float(pkt_time_str)
+                        if min_packet_epoch is None or ts < min_packet_epoch:
+                            min_packet_epoch = ts
+                        if max_packet_epoch is None or ts > max_packet_epoch:
+                            max_packet_epoch = ts
+                    except ValueError:
+                        pass
 
-        if ip_src and eth_src:
-            src_vlan, _ = get_vlan_info(ip_src, vlan_networks)
-            mac_source_ips[eth_src].add(ip_src)
-            is_local = False
-            dst_vlan, _ = get_vlan_info(ip_dst, vlan_networks) if ip_dst else (None, None)
-            if src_vlan is not None and src_vlan == dst_vlan:
-                is_local = True
-            elif ip_ttl:
-                try:
-                    ttl_val = int(ip_ttl)
-                    if ttl_val in (64, 128, 255):
+                packet_count += 1
+
+                now = time.time()
+                if packet_count % 1000 == 0 or (now - last_progress_update) > 0.5:
+                    last_progress_update = now
+                    elapsed = max(0.001, now - start_time)
+                    rate = packet_count / elapsed
+                    pct = (packet_count / total_expected_packets * 100) if total_expected_packets > 0 else 0
+                    rem_pkts = max(0, total_expected_packets - packet_count) if total_expected_packets > 0 else 0
+                    eta_sec = (rem_pkts / rate) if (rate > 0 and total_expected_packets > 0) else None
+
+                    elapsed_str = format_seconds(elapsed)
+                    eta_str = format_seconds(eta_sec)
+
+                    pkts_info = f"{packet_count:,}/{total_expected_packets:,}" if total_expected_packets > 0 else f"{packet_count:,}"
+                    progress_msg = (
+                        f"\rnetpipeline progress: [{file_idx}/{len(valid_pcaps)} pcaps] "
+                        f"{pkts_info} pkts ({pct:.1f}%) | {rate:.0f} pkts/s | Elapsed: {elapsed_str} | ETA: {eta_str}"
+                    )
+                    sys.stdout.write(progress_msg.ljust(95))
+                    sys.stdout.flush()
+
+                ip_src = get_first(parts[1])
+                eth_src = get_first(parts[2])
+                ip_dst = get_first(parts[3])
+                eth_dst = get_first(parts[4])
+                ip_ttl = get_first(parts[5])
+                arp_ip = get_first(parts[6])
+                arp_mac = get_first(parts[7])
+                dns_name = get_first(parts[8])
+                dns_ip = get_first(parts[9])
+                dhcp_host = get_first(parts[10])
+                bootp_host = get_first(parts[11])
+                bootp_your_ip = get_first(parts[12])
+                nbns_name = get_first(parts[13])
+                tls_sni = get_first(parts[14])
+                http_host = get_first(parts[15])
+                tcp_dstport = get_first(parts[16])
+                udp_dstport = get_first(parts[17])
+                tcp_srcport = get_first(parts[18])
+                udp_srcport = get_first(parts[19])
+                tcp_flags = get_first(parts[20]) if len(parts) > 20 else ""
+                vlan_id_pkt = get_first(parts[21]) if len(parts) > 21 else ""
+
+                # Passive Hostname / MAC tracking
+                if dns_name and dns_ip:
+                    ip_hostnames[dns_ip].append(clean_hostname(dns_name))
+                if dhcp_host and bootp_your_ip:
+                    ip_hostnames[bootp_your_ip].append(clean_hostname(dhcp_host))
+                elif bootp_host and bootp_your_ip:
+                    ip_hostnames[bootp_your_ip].append(clean_hostname(bootp_host))
+                if tls_sni and ip_dst:
+                    ip_hostnames[ip_dst].append(clean_hostname(tls_sni))
+                elif http_host and ip_dst:
+                    ip_hostnames[ip_dst].append(clean_hostname(http_host))
+                if nbns_name and ip_src:
+                    ip_hostnames[ip_src].append(clean_hostname(nbns_name))
+                    
+                if arp_ip and arp_mac:
+                    arp_ip_macs[arp_ip].add(arp_mac)
+
+                if vlan_id_pkt:
+                    if ip_src and eth_src:
+                        ip_mac_vlans[(ip_src, eth_src)].append(vlan_id_pkt)
+                    if ip_dst and eth_dst:
+                        ip_mac_vlans[(ip_dst, eth_dst)].append(vlan_id_pkt)
+
+                if ip_src and eth_src:
+                    src_vlan, _ = get_vlan_info(ip_src, vlan_networks)
+                    mac_source_ips[eth_src].add(ip_src)
+                    is_local = False
+                    dst_vlan, _ = get_vlan_info(ip_dst, vlan_networks) if ip_dst else (None, None)
+                    if src_vlan is not None and src_vlan == dst_vlan:
                         is_local = True
-                except ValueError:
-                    pass
-            if is_local:
-                ip_source_macs[ip_src].add(eth_src)
-                ip_mac_packet_count[(ip_src, eth_src)] += 1
-
-        # Flows extraction
-        if ip_src and ip_dst:
-            if is_multicast_or_broadcast(ip_src, vlan_networks) or is_multicast_or_broadcast(ip_dst, vlan_networks):
-                continue
-                
-            if tcp_dstport or tcp_srcport:
-                proto = "tcp"
-                sport = int(tcp_srcport) if tcp_srcport else 0
-                dport = int(tcp_dstport) if tcp_dstport else 0
-                if sport or dport:
-                    endpoint1 = (ip_src, sport)
-                    endpoint2 = (ip_dst, dport)
-                    conn_key = (endpoint1, endpoint2) if endpoint1 < endpoint2 else (endpoint2, endpoint1)
-                    
-                    tcp_conn_pkt_counts[conn_key] += 1
-                    
-                    is_syn = False
-                    if tcp_flags:
+                    elif ip_ttl:
                         try:
-                            val = int(tcp_flags, 16) if tcp_flags.lower().startswith('0x') else int(tcp_flags)
-                            if (val & 0x02) and not (val & 0x10):
-                                is_syn = True
+                            ttl_val = int(ip_ttl)
+                            if ttl_val in (64, 128, 255):
+                                is_local = True
                         except ValueError:
                             pass
-                    
-                    if conn_key not in tcp_conversations:
-                        tcp_conversations[conn_key] = False
-                    if is_syn:
-                        tcp_conversations[conn_key] = True
-                        tcp_conn_info[conn_key] = (ip_src, ip_dst, "tcp", dport)
-            elif udp_dstport or udp_srcport:
-                proto = "udp"
-                sport = int(udp_srcport) if udp_srcport else 0
-                dport = int(udp_dstport) if udp_dstport else 0
-                if sport or dport:
-                    port, is_dst_service = get_service_port_and_direction(proto, sport, dport, protocols_dict)
-                    if is_dst_service:
-                        client_ip = ip_src
-                        server_ip = ip_dst
-                    else:
-                        client_ip = ip_dst
-                        server_ip = ip_src
-                    udp_flow_key = (client_ip, server_ip, "udp", port)
-                    udp_flow_pkt_counts[udp_flow_key] += 1
+                    if is_local:
+                        ip_source_macs[ip_src].add(eth_src)
+                        ip_mac_packet_count[(ip_src, eth_src)] += 1
 
-    proc.stdout.close()
-    proc.wait()
-    print(f"netpipeline: Passive analysis complete. Processed {packet_count} total packets.")
+                # Flows extraction
+                if ip_src and ip_dst:
+                    if is_multicast_or_broadcast(ip_src, vlan_networks) or is_multicast_or_broadcast(ip_dst, vlan_networks):
+                        continue
+                        
+                    if tcp_dstport or tcp_srcport:
+                        proto = "tcp"
+                        sport = int(tcp_srcport) if tcp_srcport else 0
+                        dport = int(tcp_dstport) if tcp_dstport else 0
+                        if sport or dport:
+                            endpoint1 = (ip_src, sport)
+                            endpoint2 = (ip_dst, dport)
+                            conn_key = (endpoint1, endpoint2) if endpoint1 < endpoint2 else (endpoint2, endpoint1)
+                            
+                            tcp_conn_pkt_counts[conn_key] += 1
+                            
+                            is_syn = False
+                            if tcp_flags:
+                                try:
+                                    val = int(tcp_flags, 16) if tcp_flags.lower().startswith('0x') else int(tcp_flags)
+                                    if (val & 0x02) and not (val & 0x10):
+                                        is_syn = True
+                                except ValueError:
+                                    pass
+                            
+                            if conn_key not in tcp_conversations:
+                                tcp_conversations[conn_key] = False
+                            if is_syn:
+                                tcp_conversations[conn_key] = True
+                                tcp_conn_info[conn_key] = (ip_src, ip_dst, "tcp", dport)
+                    elif udp_dstport or udp_srcport:
+                        proto = "udp"
+                        sport = int(udp_srcport) if udp_srcport else 0
+                        dport = int(udp_dstport) if udp_dstport else 0
+                        if sport or dport:
+                            port, is_dst_service = get_service_port_and_direction(proto, sport, dport, protocols_dict)
+                            if is_dst_service:
+                                client_ip = ip_src
+                                server_ip = ip_dst
+                            else:
+                                client_ip = ip_dst
+                                server_ip = ip_src
+                            udp_flow_key = (client_ip, server_ip, "udp", port)
+                            udp_flow_pkt_counts[udp_flow_key] += 1
+
+            except Exception:
+                corrupt_packet_count += 1
+                continue
+
+        proc.stdout.close()
+        proc.wait()
+
+    elapsed_total = max(0.001, time.time() - start_time)
+    sys.stdout.write(f"\rnetpipeline: Passive analysis complete. Processed {packet_count:,} total packets in {format_seconds(elapsed_total)}.\n".ljust(95))
+    sys.stdout.flush()
+
 
     # Gateway MAC resolution
     gateway_macs = set()
@@ -1163,11 +1304,39 @@ def main():
         print(f"Error saving external logs: {e}", file=sys.stderr)
 
     # Print summary
+    if min_packet_epoch is not None:
+        earliest_dt = datetime.datetime.fromtimestamp(min_packet_epoch, tz=datetime.timezone.utc)
+        earliest_str = earliest_dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+    else:
+        earliest_str = "N/A"
+
+    if max_packet_epoch is not None:
+        latest_dt = datetime.datetime.fromtimestamp(max_packet_epoch, tz=datetime.timezone.utc)
+        latest_str = latest_dt.strftime("%Y-%m-%d %H:%M:%S UTC")
+    else:
+        latest_str = "N/A"
+
+    if min_packet_epoch is not None and max_packet_epoch is not None:
+        duration_sec = max(0.0, max_packet_epoch - min_packet_epoch)
+        duration_str = f"{format_seconds(duration_sec)} ({duration_sec:.2f} s)"
+    else:
+        duration_str = "N/A"
+
+    pcaps_summary = f"{len(valid_pcaps)}"
+    if corrupt_pcaps:
+        pcaps_summary += f" ({len(corrupt_pcaps)} corrupt/skipped)"
+
     print("")
     print("=" * 60)
     print("  netpipeline: Run Summary")
     print("=" * 60)
-    print(f"  Packets analysed:       {packet_count}")
+    print(f"  PCAP files processed:   {pcaps_summary}")
+    print(f"  Earliest packet time:   {earliest_str}")
+    print(f"  Latest packet time:     {latest_str}")
+    print(f"  Capture duration:       {duration_str}")
+    print(f"  Packets analysed:       {packet_count:,}")
+    if corrupt_packet_count > 0:
+        print(f"  Corrupt packets:        {corrupt_packet_count:,}")
     print(f"  Starting assets:        {len(input_assets)}")
     print(f"  Discovered assets:      {len(active_ot_ips) - len(ot_asset_ips)}")
     print(f"  Total assets exported:  {len(final_assets)}")
@@ -1178,6 +1347,7 @@ def main():
     if missing_vlans:
         print(f"  New VLANs appended:     {len(missing_vlans)}")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
